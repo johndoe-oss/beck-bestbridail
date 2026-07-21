@@ -117,23 +117,27 @@ app.use("/api/uploads", express.static(uploadsDir));
 
 // ── Attached assets (hero images, placeholders) ──────────────────────────────
 // The frontend references /attached_assets/generated_images/* from Replit.
-// In their original Replit environment these were actual images; on Render
-// we serve generated placeholder SVGs so the page layout works without errors.
-// Any real uploaded product images are still served via /api/uploads.
+// In production on Render we serve beautiful placeholder SVGs so the page
+// renders correctly. Replace these with real images by uploading via the
+// admin portal (they'll be stored in /api/uploads/).
 app.get("/attached_assets/generated_images/:filename", (req, res) => {
   const filename = req.params.filename.replace(/\.(jpg|jpeg|png|webp)$/i, "");
-  const colors: Record<string, { bg: string; fg: string }> = {
-    hero:        { bg: "#1a1a2e", fg: "#d4af37" },
-    atelier:     { bg: "#2d2d2d", fg: "#d4af37" },
-    gown1:       { bg: "#3d3d4e", fg: "#ffffff" },
-    veil1:       { bg: "#4a4a5a", fg: "#ffffff" },
-    placeholder: { bg: "#f0f0f0", fg: "#999999" },
+  const images: Record<string, { bg: string; fg: string }> = {
+    hero:        { bg: "#0f0f1a", fg: "#d4af37" },
+    atelier:     { bg: "#1a1a2e", fg: "#e8d5b7" },
+    gown1:       { bg: "#2a1f2e", fg: "#f0e6d3" },
+    veil1:       { bg: "#1e2a2e", fg: "#e8d5b7" },
+    placeholder: { bg: "#f5f0eb", fg: "#c4b5a0" },
   };
-  const c = colors[filename] ?? colors.placeholder!;
+  const c = images[filename] ?? images.placeholder!;
   const label = filename.charAt(0).toUpperCase() + filename.slice(1);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
     <rect width="800" height="1000" fill="${c.bg}"/>
-    <text x="400" y="500" font-family="serif" font-size="28" fill="${c.fg}" text-anchor="middle" dominant-baseline="middle">${label}</text>
+    <circle cx="400" cy="340" r="60" fill="none" stroke="${c.fg}20" stroke-width="2"/>
+    <circle cx="400" cy="340" r="40" fill="none" stroke="${c.fg}30" stroke-width="1"/>
+    <rect x="300" y="520" width="200" height="1" rx="1" fill="${c.fg}40"/>
+    <text x="400" y="560" font-family="serif" font-size="22" fill="${c.fg}70" text-anchor="middle" letter-spacing="4">${label}</text>
+    <text x="400" y="590" font-family="sans-serif" font-size="11" fill="${c.fg}35" text-anchor="middle" letter-spacing="2">BECKBEST BRIDAL</text>
   </svg>`;
   res.setHeader("Content-Type", "image/svg+xml");
   res.setHeader("Cache-Control", "public, max-age=86400");
