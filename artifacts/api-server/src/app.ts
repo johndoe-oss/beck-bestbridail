@@ -155,7 +155,7 @@ if (frontendStaticDir) {
   app.use(express.static(frontendStaticDir));
 
   // SPA fallback: serve index.html for all non-API routes
-  app.get("*", (_req, res) => {
+  app.get("/{*path}", (_req, res) => {
     res.sendFile(path.resolve(frontendStaticDir!, "index.html"));
   });
 }
