@@ -68,9 +68,9 @@ export default function Cart() {
   return (
     <div className="bg-background min-h-screen pb-24">
       <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
-        <h1 className="font-serif text-4xl mb-12">Your Shopping Bag</h1>
+        <h1 className="font-serif text-3xl sm:text-4xl mb-8 sm:mb-12">Your Shopping Bag</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
           {/* Cart Items */}
           <div className="lg:col-span-2">
             <div className="border-b border-border pb-4 mb-6 hidden md:grid grid-cols-12 text-sm text-muted-foreground">
@@ -150,7 +150,7 @@ export default function Cart() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-muted/30 p-8 rounded-lg sticky top-24 border border-border">
+            <div className="bg-muted/30 p-6 sm:p-8 rounded-lg sticky top-24 border border-border">
               <h2 className="font-serif text-2xl mb-6">Order Summary</h2>
               
               <div className="space-y-4 text-sm mb-6">

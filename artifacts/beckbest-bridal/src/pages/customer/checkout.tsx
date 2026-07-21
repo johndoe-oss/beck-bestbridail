@@ -55,15 +55,15 @@ export default function Checkout() {
     <div className="bg-background min-h-screen pb-24">
       <div className="container mx-auto px-4 md:px-6 py-12 md:py-16 max-w-6xl">
         
-        <Link href="/cart" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-8">
+        <Link href="/cart" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 sm:mb-8">
           <ChevronLeft className="h-4 w-4 mr-1" /> Return to Bag
         </Link>
         
-        <h1 className="font-serif text-4xl mb-12 flex items-center gap-3">
+        <h1 className="font-serif text-3xl sm:text-4xl mb-8 sm:mb-12 flex items-center gap-3">
           Checkout <Lock className="h-6 w-6 text-muted-foreground" />
         </h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-24">
           
           {/* Form */}
           <div className="space-y-10 order-2 lg:order-1">

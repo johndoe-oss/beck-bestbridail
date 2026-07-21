@@ -33,7 +33,7 @@ export default function Home() {
       className="flex flex-col"
     >
       {/* Hero Section */}
-      <section className="relative h-[90vh] min-h-[600px] w-full flex items-center justify-center overflow-hidden bg-muted">
+      <section className="relative h-[80vh] min-h-[450px] sm:min-h-[600px] w-full flex items-center justify-center overflow-hidden bg-muted">
         <div className="absolute inset-0 z-0">
           <img 
             src="/attached_assets/generated_images/hero.jpg" 
@@ -49,7 +49,7 @@ export default function Home() {
             <motion.p variants={fadeIn} className="text-white/80 uppercase tracking-[0.3em] text-sm mb-6 font-medium">
               The Fall Collection
             </motion.p>
-            <motion.h1 variants={fadeIn} className="font-serif text-5xl md:text-7xl lg:text-8xl text-white leading-tight mb-8 drop-shadow-sm">
+            <motion.h1 variants={fadeIn} className="font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-white leading-tight mb-8 drop-shadow-sm">
               Elegance in Every <br className="hidden md:block"/> Thread
             </motion.h1>
             <motion.div variants={fadeIn}>
@@ -64,7 +64,7 @@ export default function Home() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-24 bg-background">
+      <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row justify-between items-end mb-12">
             <motion.div variants={fadeIn} className="max-w-xl">
@@ -83,7 +83,7 @@ export default function Home() {
           {isLoading ? (
             <ProductGridSkeleton count={4} />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-12">
               {featuredProducts?.products?.slice(0, 4).map((product, i) => (
                 <motion.div 
                   key={product.id}
@@ -124,7 +124,7 @@ export default function Home() {
       </section>
 
       {/* Brand Story */}
-      <section className="py-24 bg-muted relative overflow-hidden">
+      <section className="py-16 md:py-24 bg-muted relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none opacity-5 mix-blend-multiply" 
              style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
         <div className="container mx-auto px-4 md:px-6">
@@ -154,7 +154,7 @@ export default function Home() {
       </section>
       
       {/* Categories */}
-      <section className="py-24 bg-background">
+      <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto px-4 md:px-6">
           <motion.div variants={fadeIn} className="text-center mb-16">
             <h2 className="font-serif text-3xl md:text-4xl">Shop by Category</h2>

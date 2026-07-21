@@ -11,9 +11,11 @@ import {
   Send,
   LogOut,
   Settings,
-  BookOpen
+  BookOpen,
+  Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -41,10 +43,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Notifications", href: "/bb-studio/notifications", icon: Send },
   ];
 
-  return (
-    <div className="flex min-h-[100dvh] w-full bg-muted/30">
-      {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 border-r border-border bg-card flex flex-col hidden md:flex">
+  function SidebarContent() {
+    return (
+      <>
         <div className="h-16 flex items-center px-6 border-b border-border">
           <Link href="/bb-studio/dashboard" className="font-serif text-xl font-bold uppercase tracking-wider text-primary">
             BB Studio
@@ -86,7 +87,30 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             Logout
           </Button>
         </div>
+      </>
+    );
+  }
+
+  return (
+    <div className="flex min-h-[100dvh] w-full bg-muted/30">
+      {/* Desktop Sidebar */}
+      <aside className="w-64 flex-shrink-0 border-r border-border bg-card flex-col hidden md:flex">
+        <SidebarContent />
       </aside>
+
+      {/* Mobile Nav Trigger + Sheet */}
+      <div className="md:hidden fixed bottom-4 left-4 z-50">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button size="icon" className="h-12 w-12 rounded-full shadow-lg">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[280px] p-0">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">

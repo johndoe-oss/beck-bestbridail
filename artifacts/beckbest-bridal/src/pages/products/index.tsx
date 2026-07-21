@@ -51,7 +51,7 @@ export default function Products() {
     <div className="bg-background min-h-screen">
       <div className="bg-muted py-12 md:py-20 mb-12">
         <div className="container mx-auto px-4 md:px-6 text-center">
-          <h1 className="font-serif text-4xl md:text-5xl mb-4">
+          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl mb-4">
             {category ? `${category.charAt(0).toUpperCase() + category.slice(1)}` : 'All Collections'}
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -131,7 +131,7 @@ export default function Products() {
                 <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-12">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-12">
                 <AnimatePresence mode="popLayout">
                   {data?.products.map((product) => (
                     <motion.div 

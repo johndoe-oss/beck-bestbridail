@@ -101,11 +101,11 @@ const Footer = memo(function Footer() {
     <footer className="bg-muted text-muted-foreground border-t border-border pt-16 pb-8">
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-1 md:col-span-1">
+          <div className="col-span-1 md:col-span-1 text-center md:text-left">
             <Link href="/" className="font-serif text-2xl tracking-widest uppercase text-foreground mb-6 block">
               Beckbest
             </Link>
-            <p className="text-sm leading-relaxed max-w-xs">
+            <p className="text-sm leading-relaxed max-w-xs mx-auto md:mx-0">
               A curated destination for the modern romantic. Exquisite bridal gowns, veils, and accessories crafted with uncompromising attention to detail.
             </p>
           </div>

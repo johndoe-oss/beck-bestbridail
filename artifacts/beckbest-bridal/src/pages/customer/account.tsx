@@ -67,7 +67,7 @@ export default function Account() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
-              <h1 className="font-serif text-4xl mb-2 text-foreground">My Account</h1>
+            <h1 className="font-serif text-3xl sm:text-4xl mb-2 text-foreground">My Account</h1>
               <p className="text-muted-foreground">
                 {isUserLoading ? 'Loading...' : `Welcome back${user?.firstName ? `, ${user.firstName}` : ''}.`}
               </p>
@@ -130,8 +130,8 @@ export default function Account() {
           <div className="lg:col-span-2 space-y-8">
             {/* Recent Views */}
             <section>
-              <h2 className="font-serif text-2xl mb-6 flex items-center gap-2">
-                <Eye className="h-6 w-6 text-primary" /> Recently Viewed
+            <h2 className="font-serif text-xl sm:text-2xl mb-6 flex items-center gap-2">
+                <Eye className="h-5 w-5 text-primary" /> Recently Viewed
               </h2>
               <div className="text-center py-12 bg-muted/20 border border-border border-dashed rounded-lg">
                 <Eye className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
@@ -141,8 +141,8 @@ export default function Account() {
 
             {/* Items Bought Before / Wishlist */}
             <section>
-              <h2 className="font-serif text-2xl mb-6 flex items-center gap-2">
-                <Heart className="h-6 w-6 text-primary" /> Wishlist & Saved Items
+            <h2 className="font-serif text-xl sm:text-2xl mb-6 flex items-center gap-2">
+                <Heart className="h-5 w-5 text-primary" /> Wishlist & Saved Items
               </h2>
               {isWishlistLoading ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -181,8 +181,8 @@ export default function Account() {
 
             {/* Order History */}
             <section>
-              <h2 className="font-serif text-2xl mb-8 flex items-center gap-2">
-                <Package className="h-6 w-6 text-primary" /> Order History
+            <h2 className="font-serif text-xl sm:text-2xl mb-8 flex items-center gap-2">
+                <Package className="h-5 w-5 text-primary" /> Order History
               </h2>
 
               {isOrdersLoading ? (

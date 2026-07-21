@@ -147,7 +147,7 @@ export default function ProductDetail() {
                 <button
                   key={idx}
                   onClick={() => setCurrentImageIdx(idx)}
-                  className={`relative w-20 aspect-[3/4] flex-shrink-0 border-2 transition-all ${
+                  className={`relative w-16 sm:w-20 aspect-[3/4] flex-shrink-0 border-2 transition-all ${
                     idx === currentImageIdx ? 'border-primary opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
@@ -192,7 +192,7 @@ export default function ProductDetail() {
 
           {/* Product Info */}
           <div className="flex flex-col pt-4 lg:pt-10">
-            <h1 className="font-serif text-4xl md:text-5xl mb-4 text-foreground">{product.name}</h1>
+            <h1 className="font-serif text-2xl sm:text-3xl md:text-5xl mb-4 text-foreground">{product.name}</h1>
             
             <div className="flex items-center gap-4 mb-6">
               <span className="text-xl font-medium text-foreground">

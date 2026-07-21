@@ -50,15 +50,15 @@ export default function Login() {
 
   return (
     <div className="min-h-[80vh] flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-muted/30">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <h2 className="mt-6 text-center font-serif text-4xl text-foreground">Welcome Back</h2>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
+        <h2 className="mt-6 text-center font-serif text-3xl sm:text-4xl text-foreground">Welcome Back</h2>
         <p className="mt-2 text-center text-sm text-muted-foreground">
           Sign in to access your account and saved items
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-card py-8 px-4 shadow-sm sm:rounded-lg sm:px-10 border border-border">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
+        <div className="bg-card py-8 px-5 sm:px-10 shadow-sm sm:rounded-lg border border-border">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField

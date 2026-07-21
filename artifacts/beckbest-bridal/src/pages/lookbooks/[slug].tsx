@@ -299,7 +299,7 @@ export default function LookbookDetail() {
                           className="w-10 h-10 rounded-full mx-auto mb-1 shadow-md border-2 border-white group-hover:scale-110 transition-transform"
                           style={{ backgroundColor: color }}
                         />
-                        <span className="text-[10px] text-muted-foreground block">{color}</span>
+                    <p className="text-[10px] text-muted-foreground block truncate max-w-[60px]">{color}</p>
                       </div>
                     ))}
                   </div>
@@ -320,7 +320,7 @@ export default function LookbookDetail() {
           {/* Right Page - Lookbook Details */}
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl md:text-3xl font-serif font-bold text-foreground">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-foreground">
                 {currentItem?.caption || data.title}
               </h2>
               {data.description && (
@@ -340,7 +340,7 @@ export default function LookbookDetail() {
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 Browse Pages
               </h3>
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {items.map((item, idx) => (
                   <button
                     key={item.id}

@@ -59,12 +59,12 @@ export default function Wishlist() {
   return (
     <div className="bg-background min-h-screen pb-24">
       <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
-        <div className="flex items-end justify-between mb-12 border-b border-border pb-6">
-          <h1 className="font-serif text-4xl">Your Wishlist</h1>
+        <div className="flex flex-col sm:flex-row items-end justify-between mb-8 sm:mb-12 border-b border-border pb-6">
+          <h1 className="font-serif text-3xl sm:text-4xl">Your Wishlist</h1>
           <p className="text-muted-foreground">{wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-12">
           <AnimatePresence>
             {wishlist.items.map((item) => (
               <motion.div 

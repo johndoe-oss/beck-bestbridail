@@ -314,13 +314,13 @@ export function PurchaseModal({ product, isOpen, onClose }: PurchaseModalProps) 
             {(state === 'selection' || state === 'address') && (
               <>
                 {/* Header */}
-                <div className="p-6 border-b border-border flex gap-4">
-                  {product.images?.[0] && (
-                    <img
-                      src={product.images[0]}
-                      alt={product.name}
-                      className="w-16 h-20 object-cover rounded flex-shrink-0"
-                    />
+            <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4">
+              {product.images?.[0] && (
+                <img
+                  src={product.images[0]}
+                  alt={product.name}
+                  className="w-full sm:w-16 h-20 object-cover rounded flex-shrink-0"
+                />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Complete Your Purchase</p>
@@ -359,22 +359,22 @@ export function PurchaseModal({ product, isOpen, onClose }: PurchaseModalProps) 
                         className="rounded-none resize-none h-16 text-sm"
                       />
                     </div>
-                    <div className="flex gap-3 pt-2">
-                      <Button
-                        variant="ghost"
-                        className="flex-1 rounded-none"
-                        onClick={() => setState('selection')}
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        className="flex-1 rounded-none gap-2"
-                        onClick={handleConfirm}
-                      >
-                        Confirm Order
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </div>
+            <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="ghost"
+                    className="flex-1 rounded-none text-sm"
+                    onClick={() => setState('selection')}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    className="flex-1 rounded-none gap-2 text-sm"
+                    onClick={handleConfirm}
+                  >
+                    Confirm Order
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
                   </div>
                 )}
 

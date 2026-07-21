@@ -52,7 +52,7 @@ export default function Lookbooks() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative h-[60vh] min-h-[500px] overflow-hidden">
+      <section className="relative h-[50vh] min-h-[400px] sm:min-h-[500px] overflow-hidden">
         <img
           src="https://images.openai.com/static-rsc-4/2BKLVxfnPP2afGGSvKxWRWuITiWneJKTBXBBhxBHne7TbTfqdtIv9MR2igoBzUYughrOZRWqwhQOzs6P8EgNWYf4xEg97tzi_bAI3lGDnLIjV6pulmABSBN5Q8KSgJaU4_bV-BDTVLl9SE7AK1IsggczBCwqcB8bBuM46MbAWMG9hjxBs-wYpOaxyB9x1tcJ?purpose=fullsize"
           alt="Beckbest Bridal Lookbook Hero"
@@ -61,10 +61,10 @@ export default function Lookbooks() {
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 flex h-full items-center justify-center text-center text-white px-4">
           <div className="max-w-4xl mx-auto space-y-6">
-            <h1 className="text-4xl md:text-6xl font-serif font-bold tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-serif font-bold tracking-tight">
               The Beckbest Bridal Lookbook
             </h1>
-            <p className="text-lg md:text-xl font-light tracking-wide max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-xl font-light tracking-wide max-w-2xl mx-auto">
               Explore our curated collections — from wedding gowns to bridal showers, 
               engagements to honeymoons. Flip through each booklet to discover your perfect look.
             </p>

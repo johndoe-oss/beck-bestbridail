@@ -71,25 +71,25 @@ export default function VerifyEmail() {
 
   return (
     <div className="min-h-[80vh] flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-muted/30">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <h2 className="mt-6 text-center font-serif text-4xl text-foreground">Verify your email</h2>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
+        <h2 className="mt-6 text-center font-serif text-3xl sm:text-4xl text-foreground">Verify your email</h2>
         <p className="mt-2 text-center text-sm text-muted-foreground">
           We've sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-card py-10 px-4 shadow-sm sm:rounded-lg sm:px-10 border border-border flex flex-col items-center">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
+        <div className="bg-card py-10 px-5 sm:px-10 shadow-sm sm:rounded-lg border border-border flex flex-col items-center">
           
-          <div className="mb-8">
+          <div className="mb-8 w-full overflow-x-auto flex justify-center">
             <InputOTP maxLength={6} value={code} onChange={setCode} onComplete={handleVerify} autoFocus>
-              <InputOTPGroup className="gap-2">
-                <InputOTPSlot index={0} className="w-12 h-14 text-lg border-border" />
-                <InputOTPSlot index={1} className="w-12 h-14 text-lg border-border" />
-                <InputOTPSlot index={2} className="w-12 h-14 text-lg border-border" />
-                <InputOTPSlot index={3} className="w-12 h-14 text-lg border-border" />
-                <InputOTPSlot index={4} className="w-12 h-14 text-lg border-border" />
-                <InputOTPSlot index={5} className="w-12 h-14 text-lg border-border" />
+              <InputOTPGroup className="gap-1 sm:gap-2">
+                <InputOTPSlot index={0} className="w-10 sm:w-12 h-12 sm:h-14 text-base sm:text-lg border-border" />
+                <InputOTPSlot index={1} className="w-10 sm:w-12 h-12 sm:h-14 text-base sm:text-lg border-border" />
+                <InputOTPSlot index={2} className="w-10 sm:w-12 h-12 sm:h-14 text-base sm:text-lg border-border" />
+                <InputOTPSlot index={3} className="w-10 sm:w-12 h-12 sm:h-14 text-base sm:text-lg border-border" />
+                <InputOTPSlot index={4} className="w-10 sm:w-12 h-12 sm:h-14 text-base sm:text-lg border-border" />
+                <InputOTPSlot index={5} className="w-10 sm:w-12 h-12 sm:h-14 text-base sm:text-lg border-border" />
               </InputOTPGroup>
             </InputOTP>
           </div>
