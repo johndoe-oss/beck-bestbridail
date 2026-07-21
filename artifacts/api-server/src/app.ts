@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import pinoHttp from "pino-http";
 import compression from "compression";
 import path from "path";
+import fs from "fs";
 import router from "./routes";
 import { securityMiddleware } from "./middlewares/security";
 import { logger } from "./lib/logger";
@@ -129,5 +130,29 @@ app.use("/api/uploads", cacheControl(86400));      // 1 day for static images
 
 // ── API router ────────────────────────────────────────────────────────────────
 app.use("/api", router);
+
+// ── Serve built frontend in production ────────────────────────────────────────
+if (process.env.NODE_ENV === "production") {
+  const frontendDist = path.resolve(process.cwd(), "..", "..", "artifacts", "beckbest-bridal", "dist", "public");
+  const altFrontendDist = path.resolve(process.cwd(), "artifacts", "beckbest-bridal", "dist", "public");
+
+  // Try multiple possible paths depending on where the process runs
+  let staticDir = frontendDist;
+  if (!fs.existsSync(frontendDist) && fs.existsSync(altFrontendDist)) {
+    staticDir = altFrontendDist;
+  }
+
+  app.use(express.static(staticDir));
+
+  // SPA fallback: serve index.html for all non-API routes
+  app.get("*", (_req, res) => {
+    const indexPath = path.resolve(staticDir, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send("Frontend not built yet. Run 'npm run build:web' first.");
+    }
+  });
+}
 
 export default app;

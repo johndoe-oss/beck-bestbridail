@@ -1,0 +1,16 @@
+node_modules
+.git
+.env
+.env.example
+dist
+.gitignore
+.gitattributes
+.gitkeep
+*.md
+.cache
+.local
+playwright-report
+test-results
+uploads
+README.md
+replit.md
