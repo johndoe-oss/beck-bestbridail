@@ -117,19 +117,28 @@ app.use("/api/uploads", express.static(uploadsDir));
 
 // ── Attached assets (hero images, placeholders) ──────────────────────────────
 // The frontend references /attached_assets/generated_images/* from Replit.
-// Serve them from the repo root's attached_assets/ directory.
-// Try multiple possible paths (same logic as the frontend static dirs).
-const attachedCandidates = [
-  path.resolve(process.cwd(), "attached_assets"),                              // run from repo root
-  path.resolve(process.cwd(), "..", "..", "attached_assets"),                  // run from artifacts/api-server/
-  path.resolve(__dirname, "..", "..", "..", "attached_assets"),                // dist/index.mjs in artifacts/api-server/dist/
-];
-for (const p of attachedCandidates) {
-  if (fs.existsSync(p)) {
-    app.use("/attached_assets", express.static(p, { maxAge: "1d" }));
-    break;
-  }
-}
+// In their original Replit environment these were actual images; on Render
+// we serve generated placeholder SVGs so the page layout works without errors.
+// Any real uploaded product images are still served via /api/uploads.
+app.get("/attached_assets/generated_images/:filename", (req, res) => {
+  const filename = req.params.filename.replace(/\.(jpg|jpeg|png|webp)$/i, "");
+  const colors: Record<string, { bg: string; fg: string }> = {
+    hero:        { bg: "#1a1a2e", fg: "#d4af37" },
+    atelier:     { bg: "#2d2d2d", fg: "#d4af37" },
+    gown1:       { bg: "#3d3d4e", fg: "#ffffff" },
+    veil1:       { bg: "#4a4a5a", fg: "#ffffff" },
+    placeholder: { bg: "#f0f0f0", fg: "#999999" },
+  };
+  const c = colors[filename] ?? colors.placeholder!;
+  const label = filename.charAt(0).toUpperCase() + filename.slice(1);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+    <rect width="800" height="1000" fill="${c.bg}"/>
+    <text x="400" y="500" font-family="serif" font-size="28" fill="${c.fg}" text-anchor="middle" dominant-baseline="middle">${label}</text>
+  </svg>`;
+  res.setHeader("Content-Type", "image/svg+xml");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(svg);
+});
 
 // ── Caching headers for GET endpoints ─────────────────────────────────────────
 // Products, categories, and lookbooks change rarely — let browsers cache them.
