@@ -21,6 +21,7 @@
     "serve:web": "cd artifacts/beckbest-bridal && cross-env PORT=5173 BASE_PATH=/ vite preview --config vite.config.ts --host 0.0.0.0",
     "preview:sandbox": "cd artifacts/mockup-sandbox && cross-env PORT=5174 BASE_PATH=/ vite preview",
     "seed": "cd artifacts/api-server && node --env-file-if-exists=../../.env --import tsx src/seed.ts",
+    "postinstall": "npm run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "npm run typecheck:libs && npm run typecheck:api && npm run typecheck:web && npm run typecheck:sandbox && npm run typecheck:scripts",
     "typecheck:api": "cd artifacts/api-server && tsc -p tsconfig.json --noEmit",
