@@ -1,0 +1,1431 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Beckbest Bridal API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: products
+    description: Product catalog
+  - name: categories
+    description: Product categories
+  - name: customers
+    description: Customer auth and profile
+  - name: cart
+    description: Shopping cart
+  - name: wishlist
+    description: Wishlist
+  - name: orders
+    description: Orders
+  - name: portal
+    description: Admin portal operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List products
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: featured
+          in: query
+          schema: { type: boolean }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: minPrice
+          in: query
+          schema: { type: number }
+        - name: maxPrice
+          in: query
+          schema: { type: number }
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductList"
+
+  /products/featured:
+    get:
+      operationId: listFeaturedProducts
+      tags: [products]
+      summary: List featured products for homepage
+      responses:
+        "200":
+          description: Featured products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductList"
+
+  /products/{id}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get single product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryList"
+
+  /customers/register:
+    post:
+      operationId: registerCustomer
+      tags: [customers]
+      summary: Register a new customer account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerRegistration"
+      responses:
+        "201":
+          description: Customer registered, verification email sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "400":
+          description: Invalid input
+        "409":
+          description: Email already exists
+
+  /customers/verify-email:
+    post:
+      operationId: verifyCustomerEmail
+      tags: [customers]
+      summary: Verify email with 6-digit code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailInput"
+      responses:
+        "200":
+          description: Email verified, returns auth token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid or expired code
+
+  /customers/resend-verification:
+    post:
+      operationId: resendVerification
+      tags: [customers]
+      summary: Resend email verification code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResendVerificationInput"
+      responses:
+        "200":
+          description: Code sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+
+  /customers/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [customers]
+      summary: Request password reset code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailInput"
+      responses:
+        "200":
+          description: Reset code sent if account exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+
+  /customers/verify-reset-code:
+    post:
+      operationId: verifyResetCode
+      tags: [customers]
+      summary: Verify 6-digit reset code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyResetCodeInput"
+      responses:
+        "200":
+          description: Code verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "400":
+          description: Invalid or expired code
+
+  /customers/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [customers]
+      summary: Reset password with verified code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordInput"
+      responses:
+        "200":
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "400":
+          description: Invalid request
+
+  /customers/login:
+    post:
+      operationId: loginCustomer
+      tags: [customers]
+      summary: Login as customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+        "403":
+          description: Email not verified
+
+  /customers/logout:
+    post:
+      operationId: logoutCustomer
+      tags: [customers]
+      summary: Logout customer
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+
+  /customers/me:
+    get:
+      operationId: getMe
+      tags: [customers]
+      summary: Get current customer profile
+      responses:
+        "200":
+          description: Customer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "401":
+          description: Unauthorized
+
+  /customers/me/cart:
+    get:
+      operationId: getCart
+      tags: [cart]
+      summary: Get shopping cart
+      responses:
+        "200":
+          description: Cart contents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "401":
+          description: Unauthorized
+
+  /customers/me/cart/items:
+    post:
+      operationId: addCartItem
+      tags: [cart]
+      summary: Add item to cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartItemInput"
+      responses:
+        "200":
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "401":
+          description: Unauthorized
+
+  /customers/me/cart/items/{productId}:
+    patch:
+      operationId: updateCartItem
+      tags: [cart]
+      summary: Update cart item quantity
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartItemUpdate"
+      responses:
+        "200":
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+    delete:
+      operationId: removeCartItem
+      tags: [cart]
+      summary: Remove item from cart
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  /customers/me/wishlist:
+    get:
+      operationId: getWishlist
+      tags: [wishlist]
+      summary: Get wishlist
+      responses:
+        "200":
+          description: Wishlist items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WishlistResponse"
+    post:
+      operationId: addToWishlist
+      tags: [wishlist]
+      summary: Add product to wishlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WishlistItemInput"
+      responses:
+        "200":
+          description: Updated wishlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WishlistResponse"
+
+  /customers/me/wishlist/{productId}:
+    delete:
+      operationId: removeFromWishlist
+      tags: [wishlist]
+      summary: Remove from wishlist
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated wishlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WishlistResponse"
+
+  /customers/me/orders:
+    get:
+      operationId: listMyOrders
+      tags: [orders]
+      summary: List customer orders
+      responses:
+        "200":
+          description: Customer orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderList"
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create order from cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Cart is empty
+
+  /customers/me/orders/{id}:
+    get:
+      operationId: getMyOrder
+      tags: [orders]
+      summary: Get a specific order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+
+  # ─── Admin Portal ──────────────────────────────────────────────────────────
+
+  /bb-portal/login:
+    post:
+      operationId: adminLogin
+      tags: [portal]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Admin logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /bb-portal/logout:
+    post:
+      operationId: adminLogout
+      tags: [portal]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+
+  /bb-portal/me:
+    get:
+      operationId: getAdminMe
+      tags: [portal]
+      summary: Get admin profile
+      responses:
+        "200":
+          description: Admin profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProfile"
+        "401":
+          description: Unauthorized
+
+  /bb-portal/stats:
+    get:
+      operationId: getAdminStats
+      tags: [portal]
+      summary: Dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /bb-portal/products:
+    get:
+      operationId: adminListProducts
+      tags: [portal]
+      summary: Admin — list all products
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductList"
+    post:
+      operationId: adminCreateProduct
+      tags: [portal]
+      summary: Admin — create product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /bb-portal/products/{id}:
+    patch:
+      operationId: adminUpdateProduct
+      tags: [portal]
+      summary: Admin — update product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+    delete:
+      operationId: adminDeleteProduct
+      tags: [portal]
+      summary: Admin — delete product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /bb-portal/categories:
+    get:
+      operationId: adminListCategories
+      tags: [portal]
+      summary: Admin — list categories
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryList"
+    post:
+      operationId: adminCreateCategory
+      tags: [portal]
+      summary: Admin — create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /bb-portal/customers:
+    get:
+      operationId: adminListCustomers
+      tags: [portal]
+      summary: Admin — list customers
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Customers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCustomerList"
+
+  /bb-portal/customers/{id}:
+    get:
+      operationId: adminGetCustomer
+      tags: [portal]
+      summary: Admin — get customer details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCustomer"
+        "404":
+          description: Not found
+
+  /bb-portal/orders:
+    get:
+      operationId: adminListOrders
+      tags: [portal]
+      summary: Admin — list all orders
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrderList"
+
+  /bb-portal/orders/{id}:
+    patch:
+      operationId: adminUpdateOrder
+      tags: [portal]
+      summary: Admin — update order status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusUpdate"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrder"
+        "404":
+          description: Not found
+
+  /bb-portal/notifications/email:
+    post:
+      operationId: sendEmailNotification
+      tags: [portal]
+      summary: Admin — send email to customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailNotificationInput"
+      responses:
+        "200":
+          description: Email notification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResult"
+
+  /bb-portal/lookbooks:
+    get:
+      operationId: adminListLookbooks
+      tags: [portal]
+      summary: Admin — list lookbooks
+      responses:
+        "200":
+          description: Lookbooks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookbookList"
+    post:
+      operationId: adminCreateLookbook
+      tags: [portal]
+      summary: Admin — create lookbook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LookbookInput"
+      responses:
+        "201":
+          description: Lookbook created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lookbook"
+
+  /bb-portal/lookbooks/{id}:
+    get:
+      operationId: adminGetLookbook
+      tags: [portal]
+      summary: Admin — get lookbook details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Lookbook with items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lookbook"
+        "404":
+          description: Not found
+    patch:
+      operationId: adminUpdateLookbook
+      tags: [portal]
+      summary: Admin — update lookbook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LookbookUpdate"
+      responses:
+        "200":
+          description: Updated lookbook
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lookbook"
+        "404":
+          description: Not found
+    delete:
+      operationId: adminDeleteLookbook
+      tags: [portal]
+      summary: Admin — delete lookbook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /bb-portal/lookbooks/{id}/items:
+    post:
+      operationId: adminCreateLookbookItem
+      tags: [portal]
+      summary: Admin — add item to lookbook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LookbookItemInput"
+      responses:
+        "201":
+          description: Lookbook item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookbookItem"
+
+  /bb-portal/lookbooks/items/{itemId}:
+    patch:
+      operationId: adminUpdateLookbookItem
+      tags: [portal]
+      summary: Admin — update lookbook item
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LookbookItemUpdate"
+      responses:
+        "200":
+          description: Updated lookbook item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookbookItem"
+        "404":
+          description: Not found
+    delete:
+      operationId: adminDeleteLookbookItem
+      tags: [portal]
+      summary: Admin — delete lookbook item
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /lookbooks:
+    get:
+      operationId: listLookbooks
+      tags: [lookbooks]
+      summary: List published lookbooks
+      responses:
+        "200":
+          description: Lookbooks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookbookList"
+
+  /lookbooks/{slug}:
+    get:
+      operationId: getLookbook
+      tags: [lookbooks]
+      summary: Get published lookbook by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Lookbook with items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lookbook"
+        "404":
+          description: Not found
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    SuccessMessage:
+      type: object
+      properties:
+        message: { type: string }
+      required: [message]
+
+    Product:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: ["string", "null"] }
+        price: { type: number }
+        compareAtPrice: { type: ["number", "null"] }
+        categoryId: { type: ["integer", "null"] }
+        categoryName: { type: ["string", "null"] }
+        images:
+          type: array
+          items: { type: string }
+        inStock: { type: boolean }
+        featured: { type: boolean }
+        sku: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+      required: [id, name, price, images, inStock, featured, createdAt]
+
+    ProductList:
+      type: object
+      properties:
+        products:
+          type: array
+          items: { $ref: "#/components/schemas/Product" }
+        total: { type: integer }
+      required: [products, total]
+
+    ProductInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        price: { type: number, minimum: 0 }
+        compareAtPrice: { type: number }
+        categoryId: { type: integer }
+        images:
+          type: array
+          items: { type: string }
+        inStock: { type: boolean }
+        featured: { type: boolean }
+        sku: { type: string }
+      required: [name, price]
+
+    ProductUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        price: { type: number, minimum: 0 }
+        compareAtPrice: { type: number }
+        categoryId: { type: integer }
+        images:
+          type: array
+          items: { type: string }
+        inStock: { type: boolean }
+        featured: { type: boolean }
+        sku: { type: string }
+
+    Category:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: ["string", "null"] }
+        imageUrl: { type: ["string", "null"] }
+        productCount: { type: integer }
+      required: [id, name, slug, productCount]
+
+    CategoryList:
+      type: object
+      properties:
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/Category" }
+      required: [categories]
+
+    CategoryInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        slug: { type: string, minLength: 1 }
+        description: { type: string }
+        imageUrl: { type: string }
+      required: [name, slug]
+
+    Customer:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string, format: email }
+        firstName: { type: string }
+        lastName: { type: string }
+        phone: { type: ["string", "null"] }
+        isVerified: { type: boolean }
+        createdAt: { type: string, format: date-time }
+      required: [id, email, firstName, lastName, isVerified, createdAt]
+
+    CustomerRegistration:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        firstName: { type: string, minLength: 1 }
+        lastName: { type: string, minLength: 1 }
+        phone: { type: string }
+      required: [email, password, firstName, lastName]
+
+    LoginInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+      required: [email, password]
+
+    VerifyEmailInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        code: { type: string, minLength: 6, maxLength: 6 }
+      required: [email, code]
+
+    ResendVerificationInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+      required: [email]
+
+    EmailInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+      required: [email]
+
+    VerifyResetCodeInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        code: { type: string, minLength: 6, maxLength: 6 }
+      required: [email, code]
+
+    ResetPasswordInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        code: { type: string, minLength: 6, maxLength: 6 }
+        newPassword: { type: string, minLength: 8 }
+      required: [email, code, newPassword]
+
+    AuthResponse:
+      type: object
+      properties:
+        customer: { $ref: "#/components/schemas/Customer" }
+        token: { type: string }
+      required: [customer, token]
+
+    CartItem:
+      type: object
+      properties:
+        productId: { type: integer }
+        productName: { type: string }
+        productImage: { type: ["string", "null"] }
+        price: { type: number }
+        quantity: { type: integer }
+      required: [productId, productName, price, quantity]
+
+    Cart:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CartItem" }
+        total: { type: number }
+        itemCount: { type: integer }
+      required: [items, total, itemCount]
+
+    CartItemInput:
+      type: object
+      properties:
+        productId: { type: integer }
+        quantity: { type: integer, minimum: 1 }
+      required: [productId, quantity]
+
+    CartItemUpdate:
+      type: object
+      properties:
+        quantity: { type: integer, minimum: 0 }
+      required: [quantity]
+
+    WishlistItem:
+      type: object
+      properties:
+        productId: { type: integer }
+        product: { $ref: "#/components/schemas/Product" }
+        addedAt: { type: string, format: date-time }
+      required: [productId, product, addedAt]
+
+    WishlistResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/WishlistItem" }
+      required: [items]
+
+    WishlistItemInput:
+      type: object
+      properties:
+        productId: { type: integer }
+      required: [productId]
+
+    OrderItem:
+      type: object
+      properties:
+        productId: { type: integer }
+        productName: { type: string }
+        productImage: { type: ["string", "null"] }
+        quantity: { type: integer }
+        priceAtTime: { type: number }
+      required: [productId, productName, quantity, priceAtTime]
+
+    Order:
+      type: object
+      properties:
+        id: { type: integer }
+        status: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderItem" }
+        totalAmount: { type: number }
+        shippingAddress: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+      required: [id, status, items, totalAmount, createdAt]
+
+    OrderList:
+      type: object
+      properties:
+        orders:
+          type: array
+          items: { $ref: "#/components/schemas/Order" }
+        total: { type: integer }
+      required: [orders, total]
+
+    OrderInput:
+      type: object
+      properties:
+        shippingAddress: { type: string }
+        notes: { type: string }
+
+    AdminLoginInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+      required: [email, password]
+
+    AdminAuthResponse:
+      type: object
+      properties:
+        token: { type: string }
+        admin: { $ref: "#/components/schemas/AdminProfile" }
+      required: [token, admin]
+
+    AdminProfile:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        name: { type: string }
+      required: [id, email, name]
+
+    AdminCustomer:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        phone: { type: ["string", "null"] }
+        isVerified: { type: boolean }
+        orderCount: { type: integer }
+        totalSpent: { type: number }
+        createdAt: { type: string, format: date-time }
+      required: [id, email, firstName, lastName, isVerified, orderCount, totalSpent, createdAt]
+
+    AdminCustomerList:
+      type: object
+      properties:
+        customers:
+          type: array
+          items: { $ref: "#/components/schemas/AdminCustomer" }
+        total: { type: integer }
+      required: [customers, total]
+
+    AdminOrder:
+      type: object
+      properties:
+        id: { type: integer }
+        customerId: { type: integer }
+        customerEmail: { type: string }
+        customerName: { type: string }
+        status: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderItem" }
+        totalAmount: { type: number }
+        shippingAddress: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+      required: [id, customerId, customerEmail, customerName, status, items, totalAmount, createdAt]
+
+    AdminOrderList:
+      type: object
+      properties:
+        orders:
+          type: array
+          items: { $ref: "#/components/schemas/AdminOrder" }
+        total: { type: integer }
+      required: [orders, total]
+
+    OrderStatusUpdate:
+      type: object
+      properties:
+        status: { type: string }
+      required: [status]
+
+    UploadedMedia:
+      type: object
+      properties:
+        url: { type: string }
+        filename: { type: string }
+      required: [url, filename]
+
+    TopProduct:
+      type: object
+      properties:
+        productId: { type: integer }
+        productName: { type: string }
+        orderCount: { type: integer }
+        revenue: { type: number }
+      required: [productId, productName, orderCount, revenue]
+
+    DashboardStats:
+      type: object
+      properties:
+        totalProducts: { type: integer }
+        totalCustomers: { type: integer }
+        totalOrders: { type: integer }
+        totalRevenue: { type: number }
+        pendingOrders: { type: integer }
+        recentOrders:
+          type: array
+          items: { $ref: "#/components/schemas/AdminOrder" }
+        topProducts:
+          type: array
+          items: { $ref: "#/components/schemas/TopProduct" }
+      required: [totalProducts, totalCustomers, totalOrders, totalRevenue, pendingOrders, recentOrders, topProducts]
+
+    EmailNotificationInput:
+      type: object
+      properties:
+        subject: { type: string, minLength: 1 }
+        message: { type: string, minLength: 1 }
+        recipientType:
+          type: string
+          enum: [all, verified, specific]
+        recipientIds:
+          type: array
+          items: { type: integer }
+      required: [subject, message, recipientType]
+
+    SmsNotificationInput:
+      type: object
+      properties:
+        message: { type: string, minLength: 1 }
+        recipientType:
+          type: string
+          enum: [all, verified, specific]
+        recipientIds:
+          type: array
+          items: { type: integer }
+      required: [message, recipientType]
+
+    NotificationResult:
+      type: object
+      properties:
+        sent: { type: integer }
+        failed: { type: integer }
+        message: { type: string }
+      required: [sent, failed, message]
+
+    Lookbook:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        slug: { type: string }
+        coverImage: { type: ["string", "null"] }
+        isPublished: { type: boolean }
+        sortOrder: { type: integer }
+        createdAt: { type: string, format: date-time }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LookbookItem"
+      required: [id, title, slug, isPublished, sortOrder, createdAt]
+
+    LookbookItem:
+      type: object
+      properties:
+        id: { type: integer }
+        lookbookId: { type: integer }
+        productId: { type: ["integer", "null"] }
+        imageUrl: { type: string }
+        caption: { type: ["string", "null"] }
+        sortOrder: { type: integer }
+        createdAt: { type: string, format: date-time }
+      required: [id, lookbookId, imageUrl, sortOrder, createdAt]
+
+    LookbookList:
+      type: object
+      properties:
+        lookbooks:
+          type: array
+          items:
+            $ref: "#/components/schemas/LookbookSummary"
+      required: [lookbooks]
+
+    LookbookSummary:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        slug: { type: string }
+        coverImage: { type: ["string", "null"] }
+        isPublished: { type: boolean }
+        sortOrder: { type: integer }
+        createdAt: { type: string, format: date-time }
+        itemCount: { type: integer }
+      required: [id, title, slug, isPublished, sortOrder, createdAt, itemCount]
+
+    LookbookInput:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string }
+        slug: { type: string, minLength: 1 }
+        coverImage: { type: string }
+        isPublished: { type: boolean }
+        sortOrder: { type: integer }
+      required: [title, slug]
+
+    LookbookUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string }
+        slug: { type: string, minLength: 1 }
+        coverImage: { type: string }
+        isPublished: { type: boolean }
+        sortOrder: { type: integer }
+
+    LookbookItemInput:
+      type: object
+      properties:
+        productId: { type: integer }
+        imageUrl: { type: string, minLength: 1 }
+        caption: { type: string }
+        sortOrder: { type: integer }
+      required: [imageUrl]
+
+    LookbookItemUpdate:
+      type: object
+      properties:
+        productId: { type: integer }
+        imageUrl: { type: string, minLength: 1 }
+        caption: { type: string }
+        sortOrder: { type: integer }
