@@ -115,6 +115,22 @@ app.use("/api", securityMiddleware);
 const uploadsDir = path.join(process.cwd(), "uploads");
 app.use("/api/uploads", express.static(uploadsDir));
 
+// ── Attached assets (hero images, placeholders) ──────────────────────────────
+// The frontend references /attached_assets/generated_images/* from Replit.
+// Serve them from the repo root's attached_assets/ directory.
+// Try multiple possible paths (same logic as the frontend static dirs).
+const attachedCandidates = [
+  path.resolve(process.cwd(), "attached_assets"),                              // run from repo root
+  path.resolve(process.cwd(), "..", "..", "attached_assets"),                  // run from artifacts/api-server/
+  path.resolve(__dirname, "..", "..", "..", "attached_assets"),                // dist/index.mjs in artifacts/api-server/dist/
+];
+for (const p of attachedCandidates) {
+  if (fs.existsSync(p)) {
+    app.use("/attached_assets", express.static(p, { maxAge: "1d" }));
+    break;
+  }
+}
+
 // ── Caching headers for GET endpoints ─────────────────────────────────────────
 // Products, categories, and lookbooks change rarely — let browsers cache them.
 const cacheControl = (maxAgeSec: number) =>
