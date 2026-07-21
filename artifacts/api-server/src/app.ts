@@ -131,27 +131,32 @@ app.use("/api/uploads", cacheControl(86400));      // 1 day for static images
 // ── API router ────────────────────────────────────────────────────────────────
 app.use("/api", router);
 
-// ── Serve built frontend in production ────────────────────────────────────────
-if (process.env.NODE_ENV === "production") {
-  const frontendDist = path.resolve(process.cwd(), "..", "..", "artifacts", "beckbest-bridal", "dist", "public");
-  const altFrontendDist = path.resolve(process.cwd(), "artifacts", "beckbest-bridal", "dist", "public");
+// ── Serve built frontend (production & Render) ─────────────────────────────────
+// Try multiple possible paths depending on where the process runs:
+//   Run from root:         cwd/artifacts/beckbest-bridal/dist/public
+//   Run from api-server:   cwd/../../artifacts/beckbest-bridal/dist/public  (dev)
+//   Bundled & run from root: cwd/artifacts/beckbest-bridal/dist/public
+const candidatePaths = [
+  path.resolve(process.cwd(), "artifacts", "beckbest-bridal", "dist", "public"),           // run from repo root
+  path.resolve(process.cwd(), "..", "..", "artifacts", "beckbest-bridal", "dist", "public"), // run from artifacts/api-server/
+  path.resolve(__dirname, "..", "..", "beckbest-bridal", "dist", "public"),                 // dist/index.mjs in artifacts/api-server/dist/
+];
 
-  // Try multiple possible paths depending on where the process runs
-  let staticDir = frontendDist;
-  if (!fs.existsSync(frontendDist) && fs.existsSync(altFrontendDist)) {
-    staticDir = altFrontendDist;
+let frontendStaticDir: string | null = null;
+for (const p of candidatePaths) {
+  const indexPath = path.resolve(p, "index.html");
+  if (fs.existsSync(indexPath)) {
+    frontendStaticDir = p;
+    break;
   }
+}
 
-  app.use(express.static(staticDir));
+if (frontendStaticDir) {
+  app.use(express.static(frontendStaticDir));
 
   // SPA fallback: serve index.html for all non-API routes
   app.get("*", (_req, res) => {
-    const indexPath = path.resolve(staticDir, "index.html");
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.status(404).send("Frontend not built yet. Run 'npm run build:web' first.");
-    }
+    res.sendFile(path.resolve(frontendStaticDir!, "index.html"));
   });
 }
 
