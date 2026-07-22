@@ -10,9 +10,9 @@ import { logger } from "../lib/logger";
 const router: IRouter = Router();
 
 function getBaseUrl(req?: ExpressRequest): string {
-  // 1. Explicit env var takes precedence
+  // 1. Explicit env var takes precedence — strip trailing slash
   const frontendUrl = process.env.FRONTEND_URL;
-  if (frontendUrl) return frontendUrl;
+  if (frontendUrl) return frontendUrl.replace(/\/+$/, "");
 
   // 2. Use X-Forwarded-Host / Host header (works on Render)
   if (req) {
@@ -21,13 +21,14 @@ function getBaseUrl(req?: ExpressRequest): string {
     const resolvedHost = (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ?? (Array.isArray(host) ? host[0] : host);
     if (resolvedHost) {
       const proto = req.headers["x-forwarded-proto"] || "https";
-      return `${proto}://${resolvedHost}`;
+      // Strip any trailing slash from the host before constructing the URL
+      return `${proto}://${resolvedHost.replace(/\/+$/, "")}`;
     }
   }
 
-  // 3. Fallback to localhost (dev)
+  // 3. Fallback (dev or production)
   return process.env.NODE_ENV === "production"
-    ? "https://beckbest-bridal.onrender.com" // fallback for Render
+    ? "https://beck-bestbridail.onrender.com"
     : `http://localhost:${process.env.PORT === "5000" ? "5173" : "5173"}`;
 }
 
