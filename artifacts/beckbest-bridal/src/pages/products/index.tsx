@@ -150,7 +150,7 @@ export default function Products() {
                           </div>
                         )}
                         <img 
-                          src={product.images?.[0] || "/attached_assets/generated_images/placeholder.jpg"} 
+                          src={product.images?.[0] || "https://images.unsplash.com/photo-1617114919297-3c8ddb01e599?w=400&h=600&fit=crop"} 
                           alt={product.name}
                           loading="lazy"
                           className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"

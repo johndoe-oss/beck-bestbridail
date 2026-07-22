@@ -156,7 +156,7 @@ export default function Account() {
                     <div key={item.productId} className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
                       <div className="aspect-[3/4] bg-muted">
                         <img
-                          src={(item.product.images && item.product.images[0]) || "/attached_assets/generated_images/placeholder.jpg"}
+                          src={(item.product.images && item.product.images[0]) || "https://images.unsplash.com/photo-1617114919297-3c8ddb01e599?w=400&h=600&fit=crop"}
                           className="w-full h-full object-cover"
                           alt={item.product.name}
                         />
@@ -236,7 +236,7 @@ export default function Account() {
                               <div key={idx} className="flex gap-4 items-center">
                                 <div className="w-16 h-20 bg-muted flex-shrink-0">
                                   <img 
-                                    src={item.productImage || "/attached_assets/generated_images/placeholder.jpg"} 
+                          src={item.productImage || "https://images.unsplash.com/photo-1617114919297-3c8ddb01e599?w=100&h=150&fit=crop"} 
                                     className="w-full h-full object-cover" 
                                     alt={item.productName} 
                                   />

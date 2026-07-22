@@ -143,7 +143,7 @@ export default function Checkout() {
                 {cart.items.map(item => (
                   <div key={item.productId} className="flex gap-4">
                     <div className="w-16 h-20 bg-muted flex-shrink-0 relative">
-                      <img src={item.productImage || "/attached_assets/generated_images/placeholder.jpg"} className="w-full h-full object-cover" />
+                      <img src={item.productImage || "https://images.unsplash.com/photo-1617114919297-3c8ddb01e599?w=100&h=150&fit=crop"} className="w-full h-full object-cover" />
                       <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
                         {item.quantity}
                       </div>

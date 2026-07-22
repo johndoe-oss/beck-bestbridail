@@ -36,7 +36,7 @@ export default function Home() {
       <section className="relative h-[80vh] min-h-[450px] sm:min-h-[600px] w-full flex items-center justify-center overflow-hidden bg-muted">
         <div className="absolute inset-0 z-0">
           <img 
-            src="/attached_assets/generated_images/hero.jpg" 
+            src="/images/hero.jpg" 
             alt="Luxury bridal gown" 
             className="w-full h-full object-cover object-top opacity-90"
           />
@@ -93,7 +93,7 @@ export default function Home() {
                 >
                   <Link href={`/products/${productSlug(product.id, product.name)}`} className="block relative aspect-[3/4] overflow-hidden bg-muted mb-4">
                     <img 
-                      src={product.images?.[0] || "/attached_assets/generated_images/placeholder.jpg"} 
+                      src={product.images?.[0] || "https://images.unsplash.com/photo-1617114919297-3c8ddb01e599?w=400&h=600&fit=crop"} 
                       alt={product.name}
                       loading="lazy"
                       className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
@@ -131,7 +131,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <motion.div variants={fadeIn} className="aspect-[4/5] relative overflow-hidden">
               <img 
-                src="/attached_assets/generated_images/atelier.jpg" 
+                src="/images/atelier.jpg" 
                 alt="Beckbest Atelier" 
                 className="w-full h-full object-cover"
               />
@@ -147,7 +147,7 @@ export default function Home() {
               <p className="text-muted-foreground leading-relaxed mb-8">
                 Our curated collections feature the finest international designers alongside our bespoke in-house creations, designed for the modern romantic who appreciates subtle luxury and uncompromising quality.
               </p>
-              <img src="/attached_assets/generated_images/placeholder.jpg" className="w-24 h-24 object-cover rounded-full mix-blend-darken grayscale opacity-70" alt="Signature" />
+              <img src="https://images.unsplash.com/photo-1583939003579-730e3918ea45?w=200&h=200&fit=crop&crop=face" className="w-24 h-24 object-cover rounded-full mix-blend-darken grayscale opacity-70" alt="Signature" />
             </motion.div>
           </div>
         </div>
@@ -162,9 +162,9 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { title: "Gowns", image: "/attached_assets/generated_images/gown1.jpg", slug: "dresses" },
-              { title: "Veils", image: "/attached_assets/generated_images/veil1.jpg", slug: "veils" },
-              { title: "Accessories", image: "/attached_assets/generated_images/placeholder.jpg", slug: "accessories" },
+              { title: "Gowns", image: "/images/gown1.jpg", slug: "dresses" },
+              { title: "Veils", image: "/images/veil1.jpg", slug: "veils" },
+              { title: "Accessories", image: "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=600&h=600&fit=crop", slug: "accessories" },
             ].map((cat, i) => (
               <motion.div key={cat.title} variants={fadeIn} custom={i}>
                 <Link href={`/products?category=${cat.slug}`} className="group block relative aspect-square overflow-hidden bg-muted">

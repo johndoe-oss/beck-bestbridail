@@ -114,7 +114,7 @@ export default function ProductDetail() {
     return <div className="py-32 text-center font-serif text-2xl">Product not found</div>;
   }
 
-  const images = product.images?.length ? product.images : ["/attached_assets/generated_images/placeholder.jpg"];
+  const images = product.images?.length ? product.images : ["https://images.unsplash.com/photo-1617114919297-3c8ddb01e599?w=800&h=1200&fit=crop"];
 
   return (
     <div className="bg-background">
@@ -295,7 +295,7 @@ export default function ProductDetail() {
                 <div key={p.id} className="group relative">
                   <Link href={`/products/${productSlug(p.id, p.name)}`} className="block relative aspect-[3/4] overflow-hidden bg-muted mb-4">
                     <img 
-                      src={p.images?.[0] || "/attached_assets/generated_images/placeholder.jpg"} 
+                      src={p.images?.[0] || "https://images.unsplash.com/photo-1617114919297-3c8ddb01e599?w=400&h=600&fit=crop"} 
                       alt={p.name}
                       className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
                     />

@@ -94,7 +94,7 @@ export default function Cart() {
                     <div className="col-span-6 flex items-center gap-6 w-full sm:w-auto">
                       <Link href={`/products/${item.productId}`} className="w-24 aspect-[3/4] bg-muted flex-shrink-0 block">
                         <img 
-                          src={item.productImage || "/attached_assets/generated_images/placeholder.jpg"} 
+                          src={item.productImage || "https://images.unsplash.com/photo-1617114919297-3c8ddb01e599?w=150&h=225&fit=crop"} 
                           alt={item.productName} 
                           className="w-full h-full object-cover"
                         />

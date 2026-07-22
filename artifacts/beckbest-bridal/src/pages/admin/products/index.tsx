@@ -108,7 +108,7 @@ export default function AdminProducts() {
                   <TableCell>
                     <div className="w-10 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
                       <img 
-                        src={product.images?.[0] || "/attached_assets/generated_images/placeholder.jpg"} 
+                        src={product.images?.[0] || "https://images.unsplash.com/photo-1617114919297-3c8ddb01e599?w=400&h=600&fit=crop"} 
                         alt=""
                         className="w-full h-full object-cover"
                       />
