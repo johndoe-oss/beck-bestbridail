@@ -117,11 +117,40 @@ app.use("/api/uploads", express.static(uploadsDir));
 
 // ── Attached assets (hero images, placeholders) ──────────────────────────────
 // The frontend references /attached_assets/generated_images/* from Replit.
-// In production on Render we serve beautiful placeholder SVGs so the page
-// renders correctly. Replace these with real images by uploading via the
-// admin portal (they'll be stored in /api/uploads/).
+// First try to serve the actual JPG file from the project directories.
+// Fall back to SVG placeholders only if the file doesn't exist.
+const IMAGE_SOURCE_DIRS = [
+  path.resolve(process.cwd(), "..", "beckbest-bridal", "attached_assets", "generated_images"),
+  path.resolve(process.cwd(), "..", "..", "attached_assets", "generated_images"),
+  path.resolve(process.cwd(), "..", "..", "artifacts", "beckbest-bridal", "attached_assets", "generated_images"),
+];
+
 app.get("/attached_assets/generated_images/:filename", (req, res) => {
-  const filename = req.params.filename.replace(/\.(jpg|jpeg|png|webp)$/i, "");
+  const filename = req.params.filename;
+
+  // Try to find and serve the actual file from any of the source directories
+  for (const dir of IMAGE_SOURCE_DIRS) {
+    const filePath = path.resolve(dir, filename);
+    if (fs.existsSync(filePath)) {
+      // Determine content type from extension
+      const ext = path.extname(filename).toLowerCase();
+      const mimeTypes: Record<string, string> = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".webp": "image/webp",
+        ".gif": "image/gif",
+      };
+      const contentType = mimeTypes[ext] || "application/octet-stream";
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      res.sendFile(filePath);
+      return;
+    }
+  }
+
+  // Fallback: serve SVG placeholder if file not found
+  const name = filename.replace(/\.(jpg|jpeg|png|webp)$/i, "");
   const images: Record<string, { bg: string; fg: string }> = {
     hero:        { bg: "#0f0f1a", fg: "#d4af37" },
     atelier:     { bg: "#1a1a2e", fg: "#e8d5b7" },
@@ -129,8 +158,8 @@ app.get("/attached_assets/generated_images/:filename", (req, res) => {
     veil1:       { bg: "#1e2a2e", fg: "#e8d5b7" },
     placeholder: { bg: "#f5f0eb", fg: "#c4b5a0" },
   };
-  const c = images[filename] ?? images.placeholder!;
-  const label = filename.charAt(0).toUpperCase() + filename.slice(1);
+  const c = images[name] ?? images.placeholder!;
+  const label = name.charAt(0).toUpperCase() + name.slice(1);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
     <rect width="800" height="1000" fill="${c.bg}"/>
     <circle cx="400" cy="340" r="60" fill="none" stroke="${c.fg}20" stroke-width="2"/>

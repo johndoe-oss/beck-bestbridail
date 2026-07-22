@@ -268,12 +268,33 @@ function scanObject(
  * - Null-byte injection
  *
  * Responds with a non-descriptive 400 error to avoid leaking information.
+ *
+ * NOTE: Routes listed in BYPASS_PATTERNS are exempt from body/query scanning
+ * to avoid false positives (e.g., payment references that may match SQLi patterns).
  */
+const BYPASS_PATTERNS = [
+  "/api/payments/verify",
+  "/api/payments/initiate",
+];
+
+function shouldBypassScan(url: string): boolean {
+  for (const pattern of BYPASS_PATTERNS) {
+    if (url.startsWith(pattern)) return true;
+  }
+  return false;
+}
+
 export function securityMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,
 ): void {
+  // Skip scanning for payment verification/initiation routes (avoid false positives)
+  if (shouldBypassScan(req.originalUrl ?? req.url)) {
+    next();
+    return;
+  }
+
   const clientIp = req.ip ?? req.socket.remoteAddress ?? "unknown";
 
   // 1 ── Block suspicious User-Agents ──────────────────────────────────────────

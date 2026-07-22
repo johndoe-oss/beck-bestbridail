@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request as ExpressRequest } from "express";
 import { db, cartsTable, ordersTable, orderItemsTable, productsTable, customersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireCustomerAuth } from "../middlewares/auth";
@@ -9,11 +9,26 @@ import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
-function getBaseUrl(): string {
+function getBaseUrl(req?: ExpressRequest): string {
+  // 1. Explicit env var takes precedence
   const frontendUrl = process.env.FRONTEND_URL;
   if (frontendUrl) return frontendUrl;
-  const port = process.env.PORT === "5000" ? "5173" : "5173";
-  return `http://localhost:${port}`;
+
+  // 2. Use X-Forwarded-Host / Host header (works on Render)
+  if (req) {
+    const forwardedHost = req.headers["x-forwarded-host"];
+    const host = req.headers["host"];
+    const resolvedHost = (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ?? (Array.isArray(host) ? host[0] : host);
+    if (resolvedHost) {
+      const proto = req.headers["x-forwarded-proto"] || "https";
+      return `${proto}://${resolvedHost}`;
+    }
+  }
+
+  // 3. Fallback to localhost (dev)
+  return process.env.NODE_ENV === "production"
+    ? "https://beckbest-bridal.onrender.com" // fallback for Render
+    : `http://localhost:${process.env.PORT === "5000" ? "5173" : "5173"}`;
 }
 
 function generateRef(): string {
@@ -173,7 +188,7 @@ router.post("/payments/initiate", requireCustomerAuth, async (req, res): Promise
       .from(customersTable)
       .where(eq(customersTable.id, customerId));
 
-    const baseUrl = getBaseUrl();
+    const baseUrl = getBaseUrl(req);
     const { authorizationUrl } = await initializePaystackTransaction({
       email: customer.email,
       amount: Math.round(totalAmount * 100),
@@ -193,7 +208,7 @@ router.post("/payments/initiate", requireCustomerAuth, async (req, res): Promise
     if (!stripe) { res.status(503).json({ error: "Stripe is not configured on this server" }); return; }
 
     const order = await createOrder(customerId, items, "stripe", ref, shippingAddress, notes);
-    const baseUrl = getBaseUrl();
+    const baseUrl = getBaseUrl(req);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
