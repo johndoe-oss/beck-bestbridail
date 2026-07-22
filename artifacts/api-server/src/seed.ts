@@ -55,6 +55,7 @@ async function seed() {
   }
 
   // ── Products ───────────────────────────────────────────────────────────────
+  const uploadPath = "/api/uploads/";
   const products = [
     {
       name: "Ivory Lace Ball Gown",
@@ -62,7 +63,7 @@ async function seed() {
       price: 3200,
       compareAtPrice: 4100,
       categoryId: categoryIds["bridal-gowns"],
-      images: [] as string[],
+      images: [uploadPath + "e26a913b-afa8-4421-862b-3b0d0ea6e117.png"],
       inStock: true,
       featured: true,
       sku: "BG-001",
@@ -73,7 +74,7 @@ async function seed() {
       price: 2850,
       compareAtPrice: null,
       categoryId: categoryIds["bridal-gowns"],
-      images: [] as string[],
+      images: ["https://images.unsplash.com/photo-1617114919297-3c8ddb01e599?w=800&h=1200&fit=crop"],
       inStock: true,
       featured: true,
       sku: "BG-002",
@@ -84,7 +85,7 @@ async function seed() {
       price: 1980,
       compareAtPrice: 2400,
       categoryId: categoryIds["bridal-gowns"],
-      images: [] as string[],
+      images: ["https://images.unsplash.com/photo-1596704017254-9b121068fb31?w=800&h=1200&fit=crop"],
       inStock: true,
       featured: true,
       sku: "BG-003",
@@ -95,7 +96,7 @@ async function seed() {
       price: 2200,
       compareAtPrice: null,
       categoryId: categoryIds["bridal-gowns"],
-      images: [] as string[],
+      images: [uploadPath + "92c44258-1d75-4b42-8e4e-b46ae7c35951.webp"],
       inStock: true,
       featured: false,
       sku: "BG-004",
@@ -106,7 +107,7 @@ async function seed() {
       price: 420,
       compareAtPrice: null,
       categoryId: categoryIds["veils"],
-      images: [] as string[],
+      images: [uploadPath + "fc6a1b7e-cd2d-4d05-8f6c-0c9a7f399e6d.webp"],
       inStock: true,
       featured: true,
       sku: "VL-001",
@@ -117,7 +118,7 @@ async function seed() {
       price: 680,
       compareAtPrice: 850,
       categoryId: categoryIds["veils"],
-      images: [] as string[],
+      images: ["https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=800&h=1200&fit=crop"],
       inStock: true,
       featured: false,
       sku: "VL-002",
@@ -128,7 +129,7 @@ async function seed() {
       price: 195,
       compareAtPrice: null,
       categoryId: categoryIds["accessories"],
-      images: [] as string[],
+      images: ["https://images.unsplash.com/photo-1611652022419-c941d44f5cbc?w=800&h=1200&fit=crop"],
       inStock: true,
       featured: false,
       sku: "AC-001",
@@ -139,7 +140,7 @@ async function seed() {
       price: 280,
       compareAtPrice: 340,
       categoryId: categoryIds["bridesmaids"],
-      images: [] as string[],
+      images: ["https://images.unsplash.com/photo-1572307480813-adb98c7c6a23?w=800&h=1200&fit=crop"],
       inStock: true,
       featured: true,
       sku: "BR-001",
@@ -148,13 +149,22 @@ async function seed() {
 
   for (const product of products) {
     const [existing] = await db
-      .select({ id: productsTable.id })
+      .select({ id: productsTable.id, images: productsTable.images })
       .from(productsTable)
       .where(eq(productsTable.sku, product.sku!));
 
     if (!existing) {
       await db.insert(productsTable).values(product);
-      console.log(`✓ Product: ${product.name}`);
+      console.log(`✓ Product created: ${product.name}`);
+    } else if (existing.images && Array.isArray(existing.images) && existing.images.length === 0) {
+      // Update existing products that have empty images
+      await db
+        .update(productsTable)
+        .set({ images: product.images, updatedAt: new Date() })
+        .where(eq(productsTable.id, existing.id));
+      console.log(`✓ Product images updated: ${product.name}`);
+    } else {
+      console.log(`  Product already exists with images: ${product.name}`);
     }
   }
 
