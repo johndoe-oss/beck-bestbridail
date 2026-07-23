@@ -275,8 +275,23 @@ if (frontendStaticDir) {
   app.use(express.static(frontendStaticDir));
 
   // SPA fallback: serve index.html for all non-API routes
-  // Express 5 uses :param* syntax instead of {*param}
-  app.get("/:path*", (_req, res) => {
+  // Express 5 / path-to-regexp v8 removed support for wildcard patterns
+  // like "*", ":path*", "{*path}". Use a middleware that checks the path.
+  app.use((req, res, next) => {
+    // Only handle GET/HEAD requests
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      next();
+      return;
+    }
+    // Skip API routes and attached assets
+    if (req.path.startsWith("/api/") || req.path.startsWith("/attached_assets/")) {
+      next();
+      return;
+    }
+    // Skip if the static middleware already handled it
+    if (res.headersSent) {
+      return;
+    }
     res.sendFile(path.resolve(frontendStaticDir!, "index.html"));
   });
 }
