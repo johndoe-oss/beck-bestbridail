@@ -298,14 +298,17 @@ export function securityMiddleware(
   const clientIp = req.ip ?? req.socket.remoteAddress ?? "unknown";
 
   // 1 ── Block suspicious User-Agents ──────────────────────────────────────────
-  const uaCheck = isBlockedUserAgent(req.headers["user-agent"]);
-  if (uaCheck.blocked) {
-    logger.warn(
-      { clientIp, ua: req.headers["user-agent"], matched: uaCheck.matched },
-      "Blocked request: malicious user-agent",
-    );
-    sendErrorHtml(res, 400, "Bad Request");
-    return;
+  // Skip UA check for health endpoints so monitoring tools (curl/wget) can reach them.
+  if (!shouldBypassUaCheck(req.originalUrl ?? req.url)) {
+    const uaCheck = isBlockedUserAgent(req.headers["user-agent"]);
+    if (uaCheck.blocked) {
+      logger.warn(
+        { clientIp, ua: req.headers["user-agent"], matched: uaCheck.matched },
+        "Blocked request: malicious user-agent",
+      );
+      sendErrorHtml(res, 400, "Bad Request");
+      return;
+    }
   }
 
   // 2 ── Block suspicious headers (Chrome extensions, custom tool headers) ─────
@@ -416,6 +419,11 @@ export function securityMiddleware(
   next();
 }
 
+// ── Bypass list ─────────────────────────────────────────────────────────────────
+// Certain endpoints should be exempt from User-Agent blocking so that
+// monitoring tools (curl, wget, etc.) can reach them.
+const UA_BYPASS_PATHS = ["/api/healthz", "/api/health"];
+
 // ── Catch-all 404 for unmatched /api/* routes ──────────────────────────────────
 
 /**
@@ -428,4 +436,14 @@ export function apiNotFoundHandler(
   _next: NextFunction,
 ): void {
   sendErrorHtml(res, 404, "Page Not Found");
+}
+
+/**
+ * Check if the request path should bypass User-Agent blocking.
+ */
+function shouldBypassUaCheck(url: string): boolean {
+  for (const path of UA_BYPASS_PATHS) {
+    if (url.startsWith(path)) return true;
+  }
+  return false;
 }

@@ -37,15 +37,16 @@ export async function uploadImage(
     folder: CLOUDINARY_FOLDER,
     public_id: publicId,
     resource_type: "image",
-    // Automatically convert to WebP for smaller sizes
-    format: "webp",
-    // Strip metadata and apply sensible defaults
+    // Do NOT force a specific format — let Cloudinary preserve the original.
+    // Forcing WebP conversion can fail on certain images (e.g. animated GIF,
+    // CMYK JPEG, certain PNGs) and some Cloudinary plans limit format
+    // transformations. The frontend already handles any modern format.
     fetch_format: "auto",
     quality: "auto:best",
   });
 
   logger.info(
-    { publicId: result.public_id, url: result.secure_url },
+    { publicId: result.public_id, url: result.secure_url, format: result.format },
     "Uploaded image to Cloudinary",
   );
 
@@ -66,7 +67,7 @@ export async function uploadImageBuffer(
         folder: CLOUDINARY_FOLDER,
         public_id: options?.publicId,
         resource_type: "image",
-        format: "webp",
+        // Do NOT force format conversion — same reason as above.
         fetch_format: "auto",
         quality: "auto:best",
       },
@@ -76,7 +77,7 @@ export async function uploadImageBuffer(
           return;
         }
         logger.info(
-          { publicId: result.public_id, url: result.secure_url },
+          { publicId: result.public_id, url: result.secure_url, format: result.format },
           "Uploaded image buffer to Cloudinary",
         );
         resolve(result.secure_url);
@@ -131,3 +132,22 @@ export function publicIdFromUrl(imageUrl: string): string | null {
   }
 }
 
+/**
+ * Verify that the Cloudinary API credentials are valid.
+ * Call this during server startup to catch misconfiguration early.
+ * Returns true if the API is reachable, false otherwise.
+ */
+export async function checkCloudinaryConfig(): Promise<boolean> {
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    logger.error("Cloudinary is not fully configured — CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET must all be set");
+    return false;
+  }
+  try {
+    const result = await cloudinary.api.ping();
+    logger.info({ status: result.status }, "Cloudinary configuration verified");
+    return true;
+  } catch (err) {
+    logger.error({ err }, "Cloudinary ping failed — check your API credentials");
+    return false;
+  }
+}

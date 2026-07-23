@@ -50,6 +50,14 @@ export async function sendEmail(
     return;
   }
 
+  // The From address MUST match the authenticated SMTP_USER or be a verified alias.
+  // Gmail SMTP rejects mail where the envelope-from doesn't match the authenticated user.
+  // We always use SMTP_USER for the actual address and SMTP_FROM for the friendly name.
+  const smtpUser = process.env.SMTP_USER ?? "";
+  const fromEnv = process.env.SMTP_FROM ?? "";
+  const fromName = fromEnv.includes("<") ? fromEnv.split("<")[0].trim().replace(/^"/, "").replace(/"$/, "") : "Beckbest Bridal";
+  const fromAddress = fromEnv.match(/<([^>]+)>/)?.[1] ?? smtpUser;
+
   // Retry up to 3 times with exponential backoff
   const MAX_RETRIES = 3;
   let lastError: Error | null = null;
@@ -57,9 +65,7 @@ export async function sendEmail(
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       await transporter.sendMail({
-        from:
-          process.env.SMTP_FROM ??
-          '"Beckbest Bridal" <noreply@beckbestbridal.com>',
+        from: `"${fromName}" <${fromAddress}>`,
         to: recipients,
         subject,
         html,
