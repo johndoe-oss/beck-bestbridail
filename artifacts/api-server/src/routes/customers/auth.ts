@@ -289,7 +289,12 @@ router.post("/customers/forgot-password", async (req, res): Promise<void> => {
 
   await db.insert(passwordResetsTable).values({ customerId: customer.id, code, expiresAt, used: false });
 
-  req.log.info({ email }, "Password reset code generated");
+  // In development, log the code so you can see it in Render logs if email delivery is delayed
+  if (process.env.NODE_ENV !== "production") {
+    req.log.warn({ email, code }, "PASSWORD RESET CODE (dev only) — email may be delayed");
+  } else {
+    req.log.info({ email }, "Password reset code generated");
+  }
   await sendEmail(email, "Reset your Beckbest Bridal password", buildPasswordResetEmail(customer.firstName, code));
 
   res.json({ message: "If an account with that email exists, a reset code has been sent." });

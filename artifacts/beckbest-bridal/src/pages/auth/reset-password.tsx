@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useSearch } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +23,7 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const { toast } = useToast();
   const [step, setStep] = useState<'verify' | 'reset'>('verify');
 
@@ -35,6 +36,15 @@ export default function ResetPassword() {
       confirmPassword: "",
     },
   });
+
+  // Auto-fill email from ?email= query param passed from forgot-password page
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const email = params.get('email');
+    if (email) {
+      form.setValue('email', email);
+    }
+  }, [searchString, form]);
 
   const verifyMutation = useVerifyResetCode();
   const resetMutation = useResetPassword();

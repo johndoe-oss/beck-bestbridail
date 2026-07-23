@@ -1,16 +1,8 @@
-# Image Upload Fix - Cloudinary Integration
+# Implementation Plan - Password Reset Fix
 
-## Progress
-
-- [x] Analyze root cause: Render's ephemeral filesystem wipes local uploads on dyno restart
-- [x] Install Cloudinary SDK (`cloudinary@^2.10.0`)
-- [x] Create `artifacts/api-server/src/lib/cloudinary.ts` - Cloudinary utility module with upload, delete, and URL parsing functions
-- [x] Update `artifacts/api-server/src/routes/portal/media.ts` - Upload to Cloudinary after local disk save, with local fallback
-- [ ] Deploy: Add Cloudinary env vars to Render dashboard
-  - `CLOUDINARY_CLOUD_NAME` - Your Cloudinary cloud name
-  - `CLOUDINARY_API_KEY` - Your Cloudinary API key
-  - `CLOUDINARY_API_SECRET` - Your Cloudinary API secret
-- [ ] Rebuild and deploy to Render
-
-
+## Steps:
+- [x] 1. Fix `forgot-password.tsx` - redirect to `/reset-password?email=...` instead of `/login`
+- [x] 2. Fix `reset-password.tsx` - auto-fill email from URL params
+- [x] 3. Fix `auth.ts` (server) - log code in development mode for debugging
+- [x] 4. Commit and push to GitHub
 

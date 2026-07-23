@@ -31,7 +31,7 @@ export default function ForgotPassword() {
     forgotMutation.mutate({ data }, {
       onSuccess: () => {
         toast({ title: "Check your email", description: "If an account exists, a reset code has been sent." });
-        setLocation("/login");
+        setLocation(`/reset-password?email=${encodeURIComponent(data.email)}`);
       },
       onError: (err: any) => {
         toast({ 
