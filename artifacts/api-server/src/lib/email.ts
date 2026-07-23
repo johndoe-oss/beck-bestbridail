@@ -1,6 +1,10 @@
 import nodemailer from "nodemailer";
 import { logger } from "./logger";
 
+/**
+ * Create a reusable SMTP transporter with sensible timeouts.
+ * Gmail can be slow from Render, so we use generous timeouts.
+ */
 function createTransporter() {
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT ?? "587", 10);
@@ -16,18 +20,18 @@ function createTransporter() {
     port,
     secure: port === 465,
     auth: { user, pass },
+    connectionTimeout: 30_000,   // 30s to establish TCP connection
+    greetingTimeout: 30_000,     // 30s for SMTP greeting
+    socketTimeout: 60_000,       // 60s for the full send operation
   });
 }
 
 /**
- * Send an email asynchronously without blocking the HTTP response.
+ * Send an email with automatic retries.
  *
- * IMPORTANT: This function is intentionally NOT awaited in route handlers.
- * Emails are sent in a fire‑and‑forget manner so that the API responds
- * immediately instead of waiting for Gmail's SMTP (which can take 10–30s
- * on Render's free tier).
- *
- * If you need guaranteed delivery, add a job queue (e.g. Bull / Redis).
+ * The function runs in the background (fire-and-forget from route handlers)
+ * so the HTTP response is never blocked.  If all retries fail, the error
+ * is logged with full detail so you can diagnose SMTP issues in Render logs.
  */
 export async function sendEmail(
   to: string | string[],
@@ -38,26 +42,70 @@ export async function sendEmail(
   const recipients = Array.isArray(to) ? to.join(",") : to;
 
   if (!transporter) {
-    logger.info(
+    logger.warn(
       { recipients, subject },
-      "Email not sent (SMTP unconfigured) — configure SMTP_HOST, SMTP_USER, SMTP_PASS",
+      "Email not sent — SMTP_HOST, SMTP_USER, or SMTP_PASS is not configured. " +
+      "Set these environment variables on Render to enable email delivery.",
     );
     return;
   }
 
-  try {
-    await transporter.sendMail({
-      from:
-        process.env.SMTP_FROM ??
-        '"Beckbest Bridal" <noreply@beckbestbridal.com>',
-      to: recipients,
-      subject,
-      html,
-    });
-    logger.info({ recipients, subject }, "Email sent successfully");
-  } catch (err) {
-    logger.error({ err, recipients, subject }, "Failed to send email");
+  // Retry up to 3 times with exponential backoff
+  const MAX_RETRIES = 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      await transporter.sendMail({
+        from:
+          process.env.SMTP_FROM ??
+          '"Beckbest Bridal" <noreply@beckbestbridal.com>',
+        to: recipients,
+        subject,
+        html,
+      });
+
+      logger.info(
+        { recipients, subject, attempt },
+        "Email sent successfully",
+      );
+      return; // success — exit the function
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+
+      if (attempt < MAX_RETRIES) {
+        const delayMs = attempt * 5_000; // 5s, then 10s
+        logger.warn(
+          {
+            recipients,
+            subject,
+            attempt,
+            maxRetries: MAX_RETRIES,
+            retryDelayMs: delayMs,
+            err: lastError.message,
+          },
+          "Email send attempt failed — will retry",
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
   }
+
+  // All retries exhausted — log the full error details
+  logger.error(
+    {
+      recipients,
+      subject,
+      maxRetries: MAX_RETRIES,
+      err: lastError?.message,
+      stack: lastError?.stack,
+      code: (lastError as any)?.code,
+      command: (lastError as any)?.command,
+      response: (lastError as any)?.response,
+      responseCode: (lastError as any)?.responseCode,
+    },
+    "Failed to send email after all retries — check SMTP credentials",
+  );
 }
 
 export function buildVerificationEmail(
