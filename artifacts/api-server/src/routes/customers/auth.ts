@@ -120,7 +120,8 @@ router.post("/customers/register", async (req, res): Promise<void> => {
   await db.insert(emailVerificationsTable).values({ customerId: customer.id, code, expiresAt });
 
   req.log.info({ email }, "Verification code generated for new registration");
-  await sendEmail(email, "Verify your Beckbest Bridal account", buildVerificationEmail(firstName, code));
+  // Fire-and-forget email — don't block the HTTP response
+  sendEmail(email, "Verify your Beckbest Bridal account", buildVerificationEmail(firstName, code));
 
   res.status(201).json({ message: "Account created. Please check your email for a verification code." });
 });
@@ -206,7 +207,8 @@ router.post("/customers/resend-verification", async (req, res): Promise<void> =>
 
   // IMPORTANT: Never log the code value — only log the email
   req.log.info({ email }, "Resend verification code requested");
-  await sendEmail(email, "Your new verification code — Beckbest Bridal", buildVerificationEmail(customer.firstName, code));
+  // Fire-and-forget email — don't block the HTTP response
+  sendEmail(email, "Your new verification code — Beckbest Bridal", buildVerificationEmail(customer.firstName, code));
 
   res.json({ message: "A new verification code has been sent to your email." });
 });
@@ -295,7 +297,8 @@ router.post("/customers/forgot-password", async (req, res): Promise<void> => {
   } else {
     req.log.info({ email }, "Password reset code generated");
   }
-  await sendEmail(email, "Reset your Beckbest Bridal password", buildPasswordResetEmail(customer.firstName, code));
+  // Fire-and-forget email — don't block the HTTP response
+  sendEmail(email, "Reset your Beckbest Bridal password", buildPasswordResetEmail(customer.firstName, code));
 
   res.json({ message: "If an account with that email exists, a reset code has been sent." });
 });

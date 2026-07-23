@@ -19,11 +19,21 @@ function createTransporter() {
   });
 }
 
+/**
+ * Send an email asynchronously without blocking the HTTP response.
+ *
+ * IMPORTANT: This function is intentionally NOT awaited in route handlers.
+ * Emails are sent in a fire‑and‑forget manner so that the API responds
+ * immediately instead of waiting for Gmail's SMTP (which can take 10–30s
+ * on Render's free tier).
+ *
+ * If you need guaranteed delivery, add a job queue (e.g. Bull / Redis).
+ */
 export async function sendEmail(
   to: string | string[],
   subject: string,
   html: string,
-): Promise<boolean> {
+): Promise<void> {
   const transporter = createTransporter();
   const recipients = Array.isArray(to) ? to.join(",") : to;
 
@@ -32,7 +42,7 @@ export async function sendEmail(
       { recipients, subject },
       "Email not sent (SMTP unconfigured) — configure SMTP_HOST, SMTP_USER, SMTP_PASS",
     );
-    return true; // graceful degradation
+    return;
   }
 
   try {
@@ -44,10 +54,9 @@ export async function sendEmail(
       subject,
       html,
     });
-    return true;
+    logger.info({ recipients, subject }, "Email sent successfully");
   } catch (err) {
-    logger.error({ err }, "Failed to send email");
-    return false;
+    logger.error({ err, recipients, subject }, "Failed to send email");
   }
 }
 

@@ -109,15 +109,24 @@ router.post(
       const publicId = path.basename(filePath, path.extname(filePath));
       const cloudinaryUrl = await uploadImage(filePath, publicId);
 
-      // Also save locally as a fallback / cache
-      // Local file already saved by multer — keep it for local dev
+      // Local file has already been saved by multer — keep it as a local cache
 
       // Return the Cloudinary URL which persists forever
       res.json({ url: cloudinaryUrl, filename: req.file.filename });
     } catch (error) {
       logger.error({ error, filePath }, "Failed to upload image to Cloudinary");
 
-      // Fallback: serve from local disk if Cloudinary is unavailable
+      // On Render the local filesystem is ephemeral — files disappear on restart.
+      // Using a local fallback would cause 404s later, so we return an error instead.
+      if (process.env.NODE_ENV === "production") {
+        res.status(502).json({
+          error: "Image upload failed. Cloudinary is unavailable.",
+          detail: "Please try again later or contact support.",
+        });
+        return;
+      }
+
+      // Fallback for local dev: serve from disk
       const localUrl = `/api/uploads/${req.file.filename}`;
       res.json({ url: localUrl, filename: req.file.filename });
     }
