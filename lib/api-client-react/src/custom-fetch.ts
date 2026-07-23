@@ -360,7 +360,27 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  // Add a 30-second timeout to prevent requests from hanging indefinitely
+  // (e.g. if the server is slow to respond on Render's free tier).
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30_000);
+  let response: Response;
+
+  try {
+    response = await fetch(input, { ...init, method, headers, signal: controller.signal });
+  } catch (err: unknown) {
+    clearTimeout(timeoutId);
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new ApiError(
+        new Response(null, { status: 408, statusText: "Request Timeout" }),
+        { error: "Request timed out after 30 seconds. Please try again." },
+        requestInfo,
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);
