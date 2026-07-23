@@ -12,6 +12,9 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+// ── Trust Render's proxy (required for rate limiting + real IP) ───────────────
+app.set("trust proxy", 1);
+
 // ── Response compression (gzip/brotli) ────────────────────────────────────────
 app.use(compression());
 
@@ -113,7 +116,25 @@ app.use("/api", securityMiddleware);
 // our npm scripts `cd` into the package directory before running,
 // so cwd = artifacts/api-server/ in both dev and prod.
 const uploadsDir = path.join(process.cwd(), "uploads");
-app.use("/api/uploads", express.static(uploadsDir));
+
+// If the file doesn't exist locally (e.g. on Render after restart), return a
+// transparent 1×1 GIF instead of a 404 — this prevents broken images from
+// crashing the product grid / admin UI.
+app.use("/api/uploads", express.static(uploadsDir, {
+  fallthrough: true, // let Express pass through to our fallback on 404
+}));
+
+// Catch-all for /api/uploads/* when the file is missing (e.g. old local URLs
+// saved before Cloudinary was configured).
+app.use("/api/uploads/*", (_req, res) => {
+  // Return a 1×1 transparent GIF pixel — this prevents React from logging
+  // endless "404 (Not Found)" errors for stale image URLs in the database.
+  const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+  res.status(200)
+    .set("Content-Type", "image/gif")
+    .set("Cache-Control", "public, max-age=86400")
+    .end(pixel);
+});
 
 // ── Attached assets (hero images, placeholders) ──────────────────────────────
 // The frontend references /attached_assets/generated_images/* from Replit.
