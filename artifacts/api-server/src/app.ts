@@ -117,18 +117,59 @@ app.use("/api", securityMiddleware);
 // so cwd = artifacts/api-server/ in both dev and prod.
 const uploadsDir = path.join(process.cwd(), "uploads");
 
-// If the file doesn't exist locally (e.g. on Render after restart), return a
-// transparent 1×1 GIF instead of a 404 — this prevents broken images from
-// crashing the product grid / admin UI.
-app.use("/api/uploads", express.static(uploadsDir, {
-  fallthrough: true, // let Express pass through to our fallback on 404
-}));
+// Custom middleware that serves files from uploadsDir, falling back to a
+// transparent 1×1 GIF pixel if the file is missing (prevents broken images
+// from flooding the console with 404 errors).
+app.use("/api/uploads", (req, res) => {
+  // Only handle GET/HEAD requests for actual filenames
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    res.status(405).end();
+    return;
+  }
 
-// Catch-all for /api/uploads/* when the file is missing (e.g. old local URLs
-// saved before Cloudinary was configured).
-app.use("/api/uploads/*", (_req, res) => {
-  // Return a 1×1 transparent GIF pixel — this prevents React from logging
-  // endless "404 (Not Found)" errors for stale image URLs in the database.
+  // Extract filename from the path after /api/uploads/
+  const filename = req.path.replace(/^\/+/, "");
+  if (!filename || filename.includes("..")) {
+    // Return pixel for invalid/missing paths
+    const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+    res.status(200)
+      .set("Content-Type", "image/gif")
+      .set("Cache-Control", "public, max-age=86400")
+      .end(pixel);
+    return;
+  }
+
+  const filePath = path.resolve(uploadsDir, filename);
+
+  // Security: ensure resolved path is still inside uploadsDir
+  if (!filePath.startsWith(uploadsDir)) {
+    const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+    res.status(200)
+      .set("Content-Type", "image/gif")
+      .set("Cache-Control", "public, max-age=86400")
+      .end(pixel);
+    return;
+  }
+
+  if (fs.existsSync(filePath)) {
+    const ext = path.extname(filename).toLowerCase();
+    const mimeTypes: Record<string, string> = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".webp": "image/webp",
+      ".gif": "image/gif",
+    };
+    const contentType = mimeTypes[ext] || "application/octet-stream";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.sendFile(filePath);
+    return;
+  }
+
+  // File not found — return transparent 1×1 GIF pixel.
+  // This prevents React from logging endless "404 (Not Found)" errors for
+  // stale image URLs stored in the database before Cloudinary was configured.
   const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
   res.status(200)
     .set("Content-Type", "image/gif")
@@ -234,7 +275,8 @@ if (frontendStaticDir) {
   app.use(express.static(frontendStaticDir));
 
   // SPA fallback: serve index.html for all non-API routes
-  app.get("/{*path}", (_req, res) => {
+  // Express 5 uses :param* syntax instead of {*param}
+  app.get("/:path*", (_req, res) => {
     res.sendFile(path.resolve(frontendStaticDir!, "index.html"));
   });
 }
