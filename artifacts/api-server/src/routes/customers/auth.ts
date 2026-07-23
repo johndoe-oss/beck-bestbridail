@@ -291,12 +291,11 @@ router.post("/customers/forgot-password", async (req, res): Promise<void> => {
 
   await db.insert(passwordResetsTable).values({ customerId: customer.id, code, expiresAt, used: false });
 
-  // In development, log the code so you can see it in Render logs if email delivery is delayed
-  if (process.env.NODE_ENV !== "production") {
-    req.log.warn({ email, code }, "PASSWORD RESET CODE (dev only) — email may be delayed");
-  } else {
-    req.log.info({ email }, "Password reset code generated");
-  }
+  // Always log the code to Render logs as a fallback in case SMTP delivery fails.
+  // Gmail's SMTP can be unreliable from Render's IP ranges, so this ensures you
+  // can always find the code by checking the server logs.
+  req.log.warn({ email, code }, "PASSWORD RESET CODE — check Render logs if email doesn't arrive");
+
   // Fire-and-forget email — don't block the HTTP response
   sendEmail(email, "Reset your Beckbest Bridal password", buildPasswordResetEmail(customer.firstName, code));
 
