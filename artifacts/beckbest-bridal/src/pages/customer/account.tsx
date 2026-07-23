@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useGetMe, useListMyOrders, useLogoutCustomer, useGetWishlist, getGetMeQueryKey, getListMyOrdersQueryKey, getGetWishlistQueryKey } from '@workspace/api-client-react';
+import React, { useState } from 'react';
+import { useGetMe, useListMyOrders, useLogoutCustomer, useGetWishlist, useSubmitFeedback, getGetMeQueryKey, getListMyOrdersQueryKey, getGetWishlistQueryKey } from '@workspace/api-client-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { LogOut, Package, User, MapPin, Heart, Eye } from 'lucide-react';
+import { LogOut, Package, User, MapPin, Heart, Eye, MessageSquare, Send, ThumbsUp, Lightbulb, AlertTriangle } from 'lucide-react';
 import { OrderListSkeleton } from '@/components/ui/app-skeletons';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 
 export default function Account() {
@@ -39,6 +41,31 @@ export default function Account() {
   const { setCustomerToken } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  // Feedback form state
+  const [feedbackType, setFeedbackType] = useState<'feedback' | 'suggestion' | 'problem'>('feedback');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const submitFeedback = useSubmitFeedback();
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackMessage.trim()) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please enter a message.' });
+      return;
+    }
+    try {
+      await submitFeedback.mutateAsync({
+        data: {
+          type: feedbackType,
+          message: feedbackMessage.trim(),
+        },
+      });
+      toast({ title: 'Thank you!', description: 'Your feedback has been submitted successfully.' });
+      setFeedbackMessage('');
+      setFeedbackType('feedback');
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err?.message || 'Failed to submit feedback.' });
+    }
+  };
 
   const handleLogout = () => {
     logout.mutate(undefined, {
@@ -123,6 +150,60 @@ export default function Account() {
               </h3>
               <p className="text-sm text-muted-foreground mb-4">No addresses saved yet.</p>
               <Button variant="outline" size="sm" className="w-full">Add New Address</Button>
+            </div>
+
+            {/* Feedback Section */}
+            <div className="bg-card border border-border p-6 rounded-lg">
+              <h3 className="font-serif text-xl mb-4 flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" /> Feedback & Suggestions
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Have a suggestion, feedback, or experiencing a problem? Let us know!
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Type</label>
+                  <Select
+                    value={feedbackType}
+                    onValueChange={(v: any) => setFeedbackType(v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="feedback">
+                        <span className="flex items-center gap-2"><ThumbsUp className="h-3.5 w-3.5" /> Feedback</span>
+                      </SelectItem>
+                      <SelectItem value="suggestion">
+                        <span className="flex items-center gap-2"><Lightbulb className="h-3.5 w-3.5" /> Suggestion</span>
+                      </SelectItem>
+                      <SelectItem value="problem">
+                        <span className="flex items-center gap-2"><AlertTriangle className="h-3.5 w-3.5" /> Problem</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Message</label>
+                  <Textarea
+                    placeholder="Tell us what's on your mind..."
+                    className="min-h-[120px]"
+                    value={feedbackMessage}
+                    onChange={(e) => setFeedbackMessage(e.target.value)}
+                  />
+                </div>
+
+                <Button 
+                  className="w-full" 
+                  onClick={handleSubmitFeedback}
+                  disabled={submitFeedback.isPending || !feedbackMessage.trim()}
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {submitFeedback.isPending ? 'Sending...' : 'Send Feedback'}
+                </Button>
+              </div>
             </div>
           </div>
 

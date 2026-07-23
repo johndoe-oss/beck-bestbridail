@@ -14,6 +14,7 @@ import portalOrdersRouter from "./portal/orders";
 import portalNotificationsRouter from "./portal/notifications";
 import portalStatsRouter from "./portal/stats";
 import portalLookbooksRouter from "./portal/lookbooks";
+import portalFeedbackRouter from "./portal/feedback";
 import paymentsRouter from "./payments";
 import { apiNotFoundHandler } from "../middlewares/security";
 
@@ -39,6 +40,7 @@ router.use(portalCustomersRouter);
 router.use(portalOrdersRouter);
 router.use(portalNotificationsRouter);
 router.use(portalLookbooksRouter);
+router.use(portalFeedbackRouter);
 
 // Catch-all 404 for any unmatched /api/* route
 router.use(apiNotFoundHandler);

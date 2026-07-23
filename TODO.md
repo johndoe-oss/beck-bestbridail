@@ -1,15 +1,16 @@
-# Image Fix Progress
+# Image Upload Fix - Cloudinary Integration
 
-## Completed Steps
+## Progress
 
-- [x] Copy real images (hero.jpg, atelier.jpg, gown1.jpg, veil1.jpg) from `attached_assets/generated_images/` to `public/images/`
-- [x] Update `home.tsx` - hero.jpg, atelier.jpg, gown1.jpg, veil1.jpg → `/images/...` and placeholder fallbacks → Unsplash URLs
-- [x] Update `products/detail.tsx` - placeholder fallback → Unsplash URL
-- [x] Update `products/index.tsx` - placeholder fallback → Unsplash URL
-- [x] Update `customer/cart.tsx` - placeholder fallback → Unsplash URL
-- [x] Update `customer/checkout.tsx` - placeholder fallback → Unsplash URL
-- [x] Update `customer/account.tsx` - placeholder fallback → Unsplash URL (2 occurrences)
-- [x] Update `customer/wishlist.tsx` - placeholder fallback → Unsplash URL
-- [x] Update `admin/products/index.tsx` - placeholder fallback → Unsplash URL
-- [x] Verified no remaining references to `attached_assets` or `placeholder.jpg` in any `.tsx` files
+- [x] Analyze root cause: Render's ephemeral filesystem wipes local uploads on dyno restart
+- [x] Install Cloudinary SDK (`cloudinary@^2.10.0`)
+- [x] Create `artifacts/api-server/src/lib/cloudinary.ts` - Cloudinary utility module with upload, delete, and URL parsing functions
+- [x] Update `artifacts/api-server/src/routes/portal/media.ts` - Upload to Cloudinary after local disk save, with local fallback
+- [ ] Deploy: Add Cloudinary env vars to Render dashboard
+  - `CLOUDINARY_CLOUD_NAME` - Your Cloudinary cloud name
+  - `CLOUDINARY_API_KEY` - Your Cloudinary API key
+  - `CLOUDINARY_API_SECRET` - Your Cloudinary API secret
+- [ ] Rebuild and deploy to Render
+
+
 

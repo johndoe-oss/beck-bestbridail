@@ -12,7 +12,8 @@ import {
   LogOut,
   Settings,
   BookOpen,
-  Menu
+  Menu,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -41,6 +42,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Customers", href: "/bb-studio/customers", icon: Users },
     { label: "Lookbooks", href: "/bb-studio/lookbooks", icon: BookOpen },
     { label: "Notifications", href: "/bb-studio/notifications", icon: Send },
+    { label: "Feedback", href: "/bb-studio/feedback", icon: MessageSquare },
   ];
 
   function SidebarContent() {

@@ -3,9 +3,9 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { promises as fsp } from "fs";
-import { v4 as uuidv4 } from "uuid";
 import { requireAdminAuth } from "../../middlewares/adminAuth";
 import { logger } from "../../lib/logger";
+import { uploadImage } from "../../lib/cloudinary";
 
 const router: IRouter = Router();
 
@@ -24,7 +24,13 @@ const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadsDir),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${uuidv4()}${ext}`);
+    // Use the original file name stem as the public ID so the Cloudinary URL is human-readable
+    const stem = path.basename(file.originalname, ext)
+      .replace(/[^a-zA-Z0-9_-]/g, "-")
+      .toLowerCase()
+      .slice(0, 60);
+    const timestamp = Date.now();
+    cb(null, `${stem}-${timestamp}${ext}`);
   },
 });
 
@@ -69,7 +75,7 @@ async function validateMagicBytes(filePath: string): Promise<boolean> {
   // WebP: RIFF....WEBP
   if (
     buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
-    buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50
+    buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x46 && buffer[11] === 0x50
   ) return true;
 
   return false;
@@ -98,8 +104,23 @@ router.post(
       return;
     }
 
-    const url = `/api/uploads/${req.file.filename}`;
-    res.json({ url, filename: req.file.filename });
+    try {
+      // Upload to Cloudinary for permanent storage
+      const publicId = path.basename(filePath, path.extname(filePath));
+      const cloudinaryUrl = await uploadImage(filePath, publicId);
+
+      // Also save locally as a fallback / cache
+      // Local file already saved by multer — keep it for local dev
+
+      // Return the Cloudinary URL which persists forever
+      res.json({ url: cloudinaryUrl, filename: req.file.filename });
+    } catch (error) {
+      logger.error({ error, filePath }, "Failed to upload image to Cloudinary");
+
+      // Fallback: serve from local disk if Cloudinary is unavailable
+      const localUrl = `/api/uploads/${req.file.filename}`;
+      res.json({ url: localUrl, filename: req.file.filename });
+    }
   },
 );
 

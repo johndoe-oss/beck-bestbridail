@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, cartsTable, productsTable, wishlistTable, ordersTable, orderItemsTable, customersTable } from "@workspace/db";
+import { db, cartsTable, productsTable, wishlistTable, ordersTable, orderItemsTable, customersTable, feedbacksTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { requireCustomerAuth } from "../../middlewares/auth";
 import {
@@ -11,6 +11,7 @@ import {
   RemoveFromWishlistParams,
   CreateOrderBody,
   GetMyOrderParams,
+  SubmitFeedbackBody,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -329,6 +330,41 @@ router.get("/customers/me/orders/:id", requireCustomerAuth, async (req, res): Pr
   }
 
   res.json(await buildOrder(order.id));
+});
+
+// ── Feedback ─────────────────────────────────────────────────────────────────
+
+router.post("/customers/me/feedback", requireCustomerAuth, async (req, res): Promise<void> => {
+  const parsed = SubmitFeedbackBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const customerId = req.customer!.id;
+  const { type, message } = parsed.data;
+
+  // Get customer info
+  const [customer] = await db
+    .select({ firstName: customersTable.firstName, lastName: customersTable.lastName, email: customersTable.email, phone: customersTable.phone })
+    .from(customersTable)
+    .where(eq(customersTable.id, customerId));
+
+  if (!customer) {
+    res.status(404).json({ error: "Customer not found" });
+    return;
+  }
+
+  await db.insert(feedbacksTable).values({
+    customerId,
+    customerName: `${customer.firstName} ${customer.lastName}`,
+    customerEmail: customer.email,
+    customerPhone: customer.phone,
+    type,
+    message,
+  });
+
+  res.status(201).json({ message: "Feedback submitted successfully. Thank you!" });
 });
 
 export default router;

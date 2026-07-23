@@ -28,6 +28,7 @@ import type {
   AdminAuthResponse,
   AdminCustomer,
   AdminCustomerList,
+  AdminFeedbackUpdate,
   AdminListCustomersParams,
   AdminListOrdersParams,
   AdminListProductsParams,
@@ -43,10 +44,13 @@ import type {
   CategoryInput,
   CategoryList,
   Customer,
+  CustomerFeedbackInput,
   CustomerRegistration,
   DashboardStats,
   EmailInput,
   EmailNotificationInput,
+  FeedbackItem,
+  FeedbackList,
   HealthStatus,
   ListProductsParams,
   LoginInput,
@@ -3407,6 +3411,144 @@ export const useSendEmailNotification = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getSendEmailNotificationMutationOptions(options), queryClient);
+    }
+
+// ── Feedback hooks ───────────────────────────────────────────────────────────
+
+export const getSubmitFeedbackUrl = () => {
+  return `/api/customers/me/feedback`
+}
+
+/**
+ * @summary Submit customer feedback
+ */
+export const submitFeedback = async (customerFeedbackInput: CustomerFeedbackInput, options?: RequestInit): Promise<SuccessMessage> => {
+  return customFetch<SuccessMessage>(getSubmitFeedbackUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customerFeedbackInput)
+  }
+);}
+
+export const getSubmitFeedbackMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitFeedback>>, TError,{data: BodyType<CustomerFeedbackInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitFeedback>>, TError,{data: BodyType<CustomerFeedbackInput>}, TContext> => {
+const mutationKey = ['submitFeedback'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitFeedback>>, {data: BodyType<CustomerFeedbackInput>}> = (props) => {
+          const {data} = props ?? {};
+          return  submitFeedback(data,requestOptions)
+        }
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitFeedbackMutationResult = NonNullable<Awaited<ReturnType<typeof submitFeedback>>>
+    export type SubmitFeedbackMutationBody = BodyType<CustomerFeedbackInput>
+    export type SubmitFeedbackMutationError = ErrorType<unknown>
+
+export const useSubmitFeedback = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitFeedback>>, TError,{data: BodyType<CustomerFeedbackInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof submitFeedback>>,
+        TError,
+        {data: BodyType<CustomerFeedbackInput>},
+        TContext
+      > => {
+      return useMutation(getSubmitFeedbackMutationOptions(options), queryClient);
+    }
+
+export const getAdminListFeedbackUrl = () => {
+  return `/api/bb-portal/feedback`
+}
+
+/**
+ * @summary Admin — list all customer feedback
+ */
+export const adminListFeedback = async ( options?: RequestInit): Promise<FeedbackList> => {
+  return customFetch<FeedbackList>(getAdminListFeedbackUrl(),
+  {
+    ...options,
+    method: 'GET'
+  }
+);}
+
+export const getAdminListFeedbackQueryKey = () => {
+    return [
+    `/api/bb-portal/feedback`
+    ] as const;
+    }
+
+export const getAdminListFeedbackQueryOptions = <TData = Awaited<ReturnType<typeof adminListFeedback>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListFeedback>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey =  queryOptions?.queryKey ?? getAdminListFeedbackQueryKey();
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListFeedback>>> = ({ signal }) => adminListFeedback({ signal, ...requestOptions });
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminListFeedback>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AdminListFeedbackQueryResult = NonNullable<Awaited<ReturnType<typeof adminListFeedback>>>
+export type AdminListFeedbackQueryError = ErrorType<unknown>
+
+export function useAdminListFeedback<TData = Awaited<ReturnType<typeof adminListFeedback>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListFeedback>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminListFeedbackQueryOptions(options)
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAdminUpdateFeedbackUrl = (id: number,) => {
+  return `/api/bb-portal/feedback/${id}`
+}
+
+/**
+ * @summary Admin — update feedback
+ */
+export const adminUpdateFeedback = async (id: number,
+    adminFeedbackUpdate: AdminFeedbackUpdate, options?: RequestInit): Promise<FeedbackItem> => {
+  return customFetch<FeedbackItem>(getAdminUpdateFeedbackUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminFeedbackUpdate)
+  }
+);}
+
+export const getAdminUpdateFeedbackMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminUpdateFeedback>>, TError,{id: number;data: BodyType<AdminFeedbackUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminUpdateFeedback>>, TError,{id: number;data: BodyType<AdminFeedbackUpdate>}, TContext> => {
+const mutationKey = ['adminUpdateFeedback'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminUpdateFeedback>>, {id: number;data: BodyType<AdminFeedbackUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+          return  adminUpdateFeedback(id,data,requestOptions)
+        }
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminUpdateFeedbackMutationResult = NonNullable<Awaited<ReturnType<typeof adminUpdateFeedback>>>
+    export type AdminUpdateFeedbackMutationBody = BodyType<AdminFeedbackUpdate>
+    export type AdminUpdateFeedbackMutationError = ErrorType<unknown>
+
+export const useAdminUpdateFeedback = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminUpdateFeedback>>, TError,{id: number;data: BodyType<AdminFeedbackUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminUpdateFeedback>>,
+        TError,
+        {id: number;data: BodyType<AdminFeedbackUpdate>},
+        TContext
+      > => {
+      return useMutation(getAdminUpdateFeedbackMutationOptions(options), queryClient);
     }
 
 export const getAdminListLookbooksUrl = () => {

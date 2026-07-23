@@ -874,6 +874,66 @@ export const SendEmailNotificationResponse = zod.object({
 
 
 /**
+ * @summary Submit customer feedback
+ */
+
+export const SubmitFeedbackBody = zod.object({
+  "type": zod.enum(['feedback', 'suggestion', 'problem']),
+  "message": zod.string().min(1)
+})
+
+export const SubmitFeedbackResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Admin — list all customer feedback
+ */
+export const AdminListFeedbackResponse = zod.object({
+  "feedbacks": zod.array(zod.object({
+  "id": zod.number(),
+  "customerId": zod.number(),
+  "customerName": zod.string(),
+  "customerEmail": zod.string(),
+  "customerPhone": zod.string().nullish(),
+  "type": zod.string(),
+  "message": zod.string(),
+  "isRead": zod.boolean(),
+  "adminReply": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})),
+  "total": zod.number()
+})
+
+
+/**
+ * @summary Admin — update feedback
+ */
+export const AdminUpdateFeedbackParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AdminUpdateFeedbackBody = zod.object({
+  "isRead": zod.boolean().optional(),
+  "adminReply": zod.string().optional()
+})
+
+export const AdminUpdateFeedbackResponse = zod.object({
+  "id": zod.number(),
+  "customerId": zod.number(),
+  "customerName": zod.string(),
+  "customerEmail": zod.string(),
+  "customerPhone": zod.string().nullish(),
+  "type": zod.string(),
+  "message": zod.string(),
+  "isRead": zod.boolean(),
+  "adminReply": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Admin — list lookbooks
  */
 export const AdminListLookbooksResponse = zod.object({

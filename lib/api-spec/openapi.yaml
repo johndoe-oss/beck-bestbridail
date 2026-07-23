@@ -22,6 +22,8 @@ tags:
     description: Wishlist
   - name: orders
     description: Orders
+  - name: feedback
+    description: Customer feedback and suggestions
   - name: portal
     description: Admin portal operations
 paths:
@@ -471,6 +473,29 @@ paths:
         "404":
           description: Not found
 
+  # ─── Customer Feedback ─────────────────────────────────────────────────────
+
+  /customers/me/feedback:
+    post:
+      operationId: submitFeedback
+      tags: [feedback]
+      summary: Submit customer feedback, suggestion, or problem report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerFeedbackInput"
+      responses:
+        "201":
+          description: Feedback submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "401":
+          description: Unauthorized
+
   # ─── Admin Portal ──────────────────────────────────────────────────────────
 
   /bb-portal/login:
@@ -750,6 +775,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationResult"
+
+  /bb-portal/feedback:
+    get:
+      operationId: adminListFeedback
+      tags: [portal]
+      summary: Admin — list all customer feedback
+      responses:
+        "200":
+          description: List of customer feedback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackList"
+
+  /bb-portal/feedback/{id}:
+    patch:
+      operationId: adminUpdateFeedback
+      tags: [portal]
+      summary: Admin — update feedback (mark as read, add reply)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminFeedbackUpdate"
+      responses:
+        "200":
+          description: Updated feedback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackItem"
+        "404":
+          description: Not found
 
   /bb-portal/lookbooks:
     get:
@@ -1339,6 +1403,45 @@ components:
         failed: { type: integer }
         message: { type: string }
       required: [sent, failed, message]
+
+    CustomerFeedbackInput:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [feedback, suggestion, problem]
+        message: { type: string, minLength: 1 }
+      required: [type, message]
+
+    FeedbackItem:
+      type: object
+      properties:
+        id: { type: integer }
+        customerId: { type: integer }
+        customerName: { type: string }
+        customerEmail: { type: string }
+        customerPhone: { type: ["string", "null"] }
+        type: { type: string }
+        message: { type: string }
+        isRead: { type: boolean }
+        adminReply: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+      required: [id, customerId, customerName, customerEmail, type, message, isRead, createdAt]
+
+    FeedbackList:
+      type: object
+      properties:
+        feedbacks:
+          type: array
+          items: { $ref: "#/components/schemas/FeedbackItem" }
+        total: { type: integer }
+      required: [feedbacks, total]
+
+    AdminFeedbackUpdate:
+      type: object
+      properties:
+        isRead: { type: boolean }
+        adminReply: { type: string }
 
     Lookbook:
       type: object

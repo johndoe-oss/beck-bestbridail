@@ -350,6 +350,36 @@ export interface NotificationResult {
   message: string;
 }
 
+export interface CustomerFeedbackInput {
+  type: 'feedback' | 'suggestion' | 'problem';
+  message: string;
+}
+
+export interface FeedbackItem {
+  id: number;
+  customerId: number;
+  customerName: string;
+  customerEmail: string;
+  /** @nullable */
+  customerPhone?: string | null;
+  type: string;
+  message: string;
+  isRead: boolean;
+  /** @nullable */
+  adminReply?: string | null;
+  createdAt: string;
+}
+
+export interface FeedbackList {
+  feedbacks: FeedbackItem[];
+  total: number;
+}
+
+export interface AdminFeedbackUpdate {
+  isRead?: boolean;
+  adminReply?: string;
+}
+
 export interface LookbookItem {
   id: number;
   lookbookId: number;

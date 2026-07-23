@@ -44,6 +44,7 @@ const AdminCustomers = lazy(() => import('@/pages/admin/customers/index'));
 const AdminCustomerDetail = lazy(() => import('@/pages/admin/customers/detail'));
 const AdminOrders = lazy(() => import('@/pages/admin/orders'));
 const AdminNotifications = lazy(() => import('@/pages/admin/notifications'));
+const AdminFeedback = lazy(() => import('@/pages/admin/feedback'));
 const AdminLookbooks = lazy(() => import('@/pages/admin/lookbooks/index'));
 const AdminLookbookForm = lazy(() => import('@/pages/admin/lookbooks/form'));
 
@@ -108,6 +109,7 @@ function Router() {
         <Route path="/bb-studio/customers/:id" component={() => <Protected component={AdminCustomerDetail} adminOnly />} />
         <Route path="/bb-studio/orders" component={() => <Protected component={AdminOrders} adminOnly />} />
         <Route path="/bb-studio/notifications" component={() => <Protected component={AdminNotifications} adminOnly />} />
+        <Route path="/bb-studio/feedback" component={() => <Protected component={AdminFeedback} adminOnly />} />
         <Route path="/bb-studio/lookbooks" component={() => <Protected component={AdminLookbooks} adminOnly />} />
         <Route path="/bb-studio/lookbooks/new" component={() => <Protected component={AdminLookbookForm} adminOnly />} />
         <Route path="/bb-studio/lookbooks/:id" component={() => <Protected component={AdminLookbookFormEdit} adminOnly />} />
