@@ -120,6 +120,10 @@ router.post("/customers/register", async (req, res): Promise<void> => {
   await db.insert(emailVerificationsTable).values({ customerId: customer.id, code, expiresAt });
 
   req.log.info({ email }, "Verification code generated for new registration");
+
+  // Always log the code to Render logs as a fallback in case SMTP delivery fails.
+  req.log.warn({ email, code }, "VERIFICATION CODE — check Render logs if email doesn't arrive");
+
   // Send the email and WAIT for it so we can report failures.
   sendEmail(email, "Verify your Beckbest Bridal account", buildVerificationEmail(firstName, code))
     .then(() => {

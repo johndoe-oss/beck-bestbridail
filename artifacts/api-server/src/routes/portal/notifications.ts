@@ -58,9 +58,12 @@ router.post("/bb-portal/notifications/email", requireAdminAuth, async (req, res)
 
   await Promise.all(
     recipients.map(async (r) => {
-      const ok = await sendEmail(r.email, subject, html);
-      if (ok) sent++;
-      else failed++;
+      try {
+        await sendEmail(r.email, subject, html);
+        sent++;
+      } catch (err) {
+        failed++;
+      }
     }),
   );
 

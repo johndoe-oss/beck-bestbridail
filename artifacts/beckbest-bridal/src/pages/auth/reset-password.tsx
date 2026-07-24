@@ -3,15 +3,18 @@ import { Link, useLocation, useSearch } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useVerifyResetCode, useResetPassword } from '@workspace/api-client-react';
+import { useVerifyResetCode, useResetPassword, useForgotPassword } from '@workspace/api-client-react';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-const resetPasswordSchema = z.object({
+const verifyCodeSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   code: z.string().min(6, "Code must be 6 digits").max(6, "Code must be 6 digits"),
+});
+
+const newPasswordSchema = z.object({
   newPassword: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string().min(8, "Please confirm your password"),
 }).refine((data) => data.newPassword === data.confirmPassword, {
@@ -19,19 +22,27 @@ const resetPasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+type VerifyCodeFormValues = z.infer<typeof verifyCodeSchema>;
+type NewPasswordFormValues = z.infer<typeof newPasswordSchema>;
 
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const { toast } = useToast();
   const [step, setStep] = useState<'verify' | 'reset'>('verify');
+  const [countdown, setCountdown] = useState(0);
 
-  const form = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
+  const verifyForm = useForm<VerifyCodeFormValues>({
+    resolver: zodResolver(verifyCodeSchema),
     defaultValues: {
       email: "",
       code: "",
+    },
+  });
+
+  const resetForm = useForm<NewPasswordFormValues>({
+    resolver: zodResolver(newPasswordSchema),
+    defaultValues: {
       newPassword: "",
       confirmPassword: "",
     },
@@ -42,14 +53,23 @@ export default function ResetPassword() {
     const params = new URLSearchParams(searchString);
     const email = params.get('email');
     if (email) {
-      form.setValue('email', email);
+      verifyForm.setValue('email', email);
     }
-  }, [searchString, form]);
+  }, [searchString, verifyForm]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   const verifyMutation = useVerifyResetCode();
   const resetMutation = useResetPassword();
+  const forgotMutation = useForgotPassword();
 
-  const onVerifyCode = (data: Omit<ResetPasswordFormValues, 'newPassword' | 'confirmPassword'>) => {
+  const onVerifyCode = (data: VerifyCodeFormValues) => {
     verifyMutation.mutate({ data }, {
       onSuccess: () => {
         toast({ title: "Code verified", description: "Please enter your new password." });
@@ -65,9 +85,16 @@ export default function ResetPassword() {
     });
   };
 
-  const onResetPassword = (data: ResetPasswordFormValues) => {
-    const { confirmPassword, ...resetData } = data;
-    resetMutation.mutate({ data: resetData }, {
+  const onResetPassword = (data: NewPasswordFormValues) => {
+    const email = verifyForm.getValues('email');
+    const code = verifyForm.getValues('code');
+    resetMutation.mutate({
+      data: {
+        email,
+        code,
+        newPassword: data.newPassword,
+      }
+    }, {
       onSuccess: () => {
         toast({ title: "Password reset successful", description: "You may now log in with your new password." });
         setLocation("/login");
@@ -77,6 +104,31 @@ export default function ResetPassword() {
           variant: "destructive", 
           title: "Reset failed", 
           description: err?.data?.message || "Please try again." 
+        });
+      }
+    });
+  };
+
+  const handleResend = () => {
+    const email = verifyForm.getValues('email');
+    if (!email) {
+      toast({ 
+        variant: "destructive", 
+        title: "Email required", 
+        description: "Please enter your email address to resend the code." 
+      });
+      return;
+    }
+    forgotMutation.mutate({ data: { email } }, {
+      onSuccess: () => {
+        toast({ title: "Code sent", description: "A new reset code has been sent to your email." });
+        setCountdown(60);
+      },
+      onError: (err: any) => {
+        toast({ 
+          variant: "destructive", 
+          title: "Failed to resend", 
+          description: err?.data?.message || "Could not send code." 
         });
       }
     });
@@ -96,10 +148,10 @@ export default function ResetPassword() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
         <div className="bg-card py-8 px-5 sm:px-10 shadow-sm sm:rounded-lg border border-border">
           {step === 'verify' ? (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onVerifyCode)} className="space-y-6">
+            <Form {...verifyForm}>
+              <form onSubmit={verifyForm.handleSubmit(onVerifyCode)} className="space-y-6">
                 <FormField
-                  control={form.control}
+                  control={verifyForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -113,7 +165,7 @@ export default function ResetPassword() {
                 />
 
                 <FormField
-                  control={form.control}
+                  control={verifyForm.control}
                   name="code"
                   render={({ field }) => (
                     <FormItem>
@@ -131,16 +183,25 @@ export default function ResetPassword() {
                     {verifyMutation.isPending ? "Verifying..." : "Verify code"}
                   </Button>
                 </div>
+
+                <div className="text-center text-sm">
+                  <span className="text-muted-foreground">Didn't receive the code? </span>
+                  <button 
+                    type="button"
+                    onClick={handleResend}
+                    disabled={countdown > 0 || forgotMutation.isPending}
+                    className="font-medium text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
+                  </button>
+                </div>
               </form>
             </Form>
           ) : (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onResetPassword)} className="space-y-6">
-                <input type="hidden" {...form.register('email')} />
-                <input type="hidden" {...form.register('code')} />
-
+            <Form {...resetForm}>
+              <form onSubmit={resetForm.handleSubmit(onResetPassword)} className="space-y-6">
                 <FormField
-                  control={form.control}
+                  control={resetForm.control}
                   name="newPassword"
                   render={({ field }) => (
                     <FormItem>
@@ -154,7 +215,7 @@ export default function ResetPassword() {
                 />
 
                 <FormField
-                  control={form.control}
+                  control={resetForm.control}
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
