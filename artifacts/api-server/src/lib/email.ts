@@ -97,21 +97,58 @@ export async function sendEmail(
     }
   }
 
-  // All retries exhausted — log the full error details
-  logger.error(
-    {
-      recipients,
-      subject,
-      maxRetries: MAX_RETRIES,
-      err: lastError?.message,
-      stack: lastError?.stack,
-      code: (lastError as any)?.code,
-      command: (lastError as any)?.command,
-      response: (lastError as any)?.response,
-      responseCode: (lastError as any)?.responseCode,
-    },
-    "Failed to send email after all retries — check SMTP credentials",
-  );
+  // All retries exhausted — log the full error details and REJECT so callers
+  // can detect the failure via .catch().
+  const errorDetail = {
+    recipients,
+    subject,
+    maxRetries: MAX_RETRIES,
+    err: lastError?.message,
+    stack: lastError?.stack,
+    code: (lastError as any)?.code,
+    command: (lastError as any)?.command,
+    response: (lastError as any)?.response,
+    responseCode: (lastError as any)?.responseCode,
+  };
+  logger.error(errorDetail, "Failed to send email after all retries — check SMTP credentials");
+  throw lastError ?? new Error("Failed to send email after all retries");
+}
+
+/**
+ * Test SMTP connectivity at server startup.
+ * Call this during app initialization to catch misconfiguration early.
+ */
+export async function checkSmtpConfig(): Promise<boolean> {
+  const transporter = createTransporter();
+  if (!transporter) {
+    logger.error("SMTP not configured — set SMTP_HOST, SMTP_USER, and SMTP_PASS");
+    return false;
+  }
+
+  const smtpUser = process.env.SMTP_USER ?? "";
+  const fromEnv = process.env.SMTP_FROM ?? "";
+  const fromAddress = fromEnv.match(/<([^>]+)>/)?.[1] ?? smtpUser;
+
+  if (fromAddress !== smtpUser) {
+    logger.error(
+      { fromAddress, smtpUser },
+      "SMTP_FROM envelope does not match SMTP_USER — Gmail will reject all emails. " +
+      "Set SMTP_FROM to use the same address as SMTP_USER.",
+    );
+    return false;
+  }
+
+  try {
+    const ok = await transporter.verify();
+    logger.info({ result: ok }, "SMTP configuration verified — Gmail credentials are valid");
+    return true;
+  } catch (err: any) {
+    logger.error(
+      { err: err.message, code: err.code, command: err.command, response: err.response },
+      "SMTP verification failed — check your Gmail App Password or SMTP credentials",
+    );
+    return false;
+  }
 }
 
 export function buildVerificationEmail(
