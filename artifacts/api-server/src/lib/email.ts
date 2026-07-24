@@ -100,26 +100,38 @@ export async function sendEmail(
 /**
  * Test Resend connectivity at server startup.
  * Call this during app initialization to catch misconfiguration early.
+ *
+ * Uses a simple domain list call to verify the API key is valid.
+ * Falls back to checking if the key is configured if the API call fails.
  */
 export async function checkEmailConfig(): Promise<boolean> {
   const resend = getResendClient();
   if (!resend) {
-    logger.error("Resend not configured — set RESEND_API_KEY in environment variables");
+    logger.error("Resend not configured — set RESEND_API_KEY in Render environment variables");
     return false;
   }
 
   try {
-    // Get the API key info to verify the key is valid
-    const { data, error } = await resend.apiKeys.list();
-    if (error) throw error;
-    logger.info({ result: "Resend API key is valid" }, "Resend configuration verified");
+    // Simple API call to verify the key is valid
+    // Using domains.list() as a lightweight health check
+    const { error } = await resend.domains.list();
+    if (error) {
+      logger.error(
+        { err: error.message },
+        "Resend API key is invalid — check your RESEND_API_KEY in Render environment variables. Get a valid key at https://resend.com",
+      );
+      return false;
+    }
+    logger.info("Resend configuration verified — API key is valid");
     return true;
   } catch (err: any) {
-    logger.error(
+    // If the API call fails but the key is configured, still consider it configured
+    // The actual send will surface any real errors
+    logger.warn(
       { err: err.message },
-      "Resend verification failed — check your RESEND_API_KEY",
+      "Resend verification check failed — but will still attempt to send emails. Check your RESEND_API_KEY if emails don't arrive.",
     );
-    return false;
+    return true; // Don't block startup — let sendEmail handle errors
   }
 }
 
