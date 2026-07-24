@@ -1,62 +1,46 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { logger } from "./logger";
 
-/**
- * Create a reusable SMTP transporter with sensible timeouts.
- * Gmail can be slow from Render, so we use generous timeouts.
- */
-function createTransporter() {
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT ?? "587", 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+// ── Resend client (primary email provider) ─────────────────────────────────
+let resendClient: Resend | null = null;
 
-  if (!host || !user || !pass) {
-    return null;
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  if (!resendClient) {
+    resendClient = new Resend(apiKey);
   }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-    connectionTimeout: 30_000,   // 30s to establish TCP connection
-    greetingTimeout: 30_000,     // 30s for SMTP greeting
-    socketTimeout: 60_000,       // 60s for the full send operation
-  });
+  return resendClient;
 }
 
 /**
- * Send an email with automatic retries.
+ * Send an email via Resend (primary) or log a warning if not configured.
  *
- * The function runs in the background (fire-and-forget from route handlers)
- * so the HTTP response is never blocked.  If all retries fail, the error
- * is logged with full detail so you can diagnose SMTP issues in Render logs.
+ * Resend is an email API service that reliably delivers emails from any
+ * hosting environment (including Render) without the IP-reputation issues
+ * that plague direct SMTP/Gmail connections from cloud providers.
+ *
+ * If RESEND_API_KEY is not set, falls back to console logging for development.
  */
 export async function sendEmail(
   to: string | string[],
   subject: string,
   html: string,
 ): Promise<void> {
-  const transporter = createTransporter();
-  const recipients = Array.isArray(to) ? to.join(",") : to;
+  const recipients = Array.isArray(to) ? to : [to];
+  const resend = getResendClient();
 
-  if (!transporter) {
+  if (!resend) {
     logger.warn(
       { recipients, subject },
-      "Email not sent — SMTP_HOST, SMTP_USER, or SMTP_PASS is not configured. " +
-      "Set these environment variables on Render to enable email delivery.",
+      "Email not sent — RESEND_API_KEY is not configured. " +
+      "Set RESEND_API_KEY in your Render environment variables to enable email delivery.",
     );
     return;
   }
 
-  // The From address MUST match the authenticated SMTP_USER or be a verified alias.
-  // Gmail SMTP rejects mail where the envelope-from doesn't match the authenticated user.
-  // We always use SMTP_USER for the actual address and SMTP_FROM for the friendly name.
-  const smtpUser = process.env.SMTP_USER ?? "";
-  const fromEnv = process.env.SMTP_FROM ?? "";
-  const fromName = fromEnv.includes("<") ? fromEnv.split("<")[0].trim().replace(/^"/, "").replace(/"$/, "") : "Beckbest Bridal";
-  const fromAddress = fromEnv.match(/<([^>]+)>/)?.[1] ?? smtpUser;
+  const fromAddress = process.env.RESEND_FROM ?? "onboarding@resend.dev";
+  const fromName = "Beckbest Bridal";
 
   // Retry up to 3 times with exponential backoff
   const MAX_RETRIES = 3;
@@ -64,23 +48,27 @@ export async function sendEmail(
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      await transporter.sendMail({
-        from: `"${fromName}" <${fromAddress}>`,
+      const { data, error } = await resend.emails.send({
+        from: `${fromName} <${fromAddress}>`,
         to: recipients,
         subject,
         html,
       });
 
+      if (error) {
+        throw error;
+      }
+
       logger.info(
-        { recipients, subject, attempt },
-        "Email sent successfully",
+        { recipients, subject, attempt, resendId: data?.id },
+        "Email sent successfully via Resend",
       );
       return; // success — exit the function
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
 
       if (attempt < MAX_RETRIES) {
-        const delayMs = attempt * 5_000; // 5s, then 10s
+        const delayMs = attempt * 3_000; // 3s, then 6s
         logger.warn(
           {
             recipients,
@@ -90,62 +78,46 @@ export async function sendEmail(
             retryDelayMs: delayMs,
             err: lastError.message,
           },
-          "Email send attempt failed — will retry",
+          "Resend email send attempt failed — will retry",
         );
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
   }
 
-  // All retries exhausted — log the full error details and REJECT so callers
-  // can detect the failure via .catch().
+  // All retries exhausted — log the full error details
   const errorDetail = {
     recipients,
     subject,
     maxRetries: MAX_RETRIES,
     err: lastError?.message,
     stack: lastError?.stack,
-    code: (lastError as any)?.code,
-    command: (lastError as any)?.command,
-    response: (lastError as any)?.response,
-    responseCode: (lastError as any)?.responseCode,
   };
-  logger.error(errorDetail, "Failed to send email after all retries — check SMTP credentials");
+  logger.error(errorDetail, "Failed to send email after all retries via Resend — check RESEND_API_KEY");
   throw lastError ?? new Error("Failed to send email after all retries");
 }
 
 /**
- * Test SMTP connectivity at server startup.
+ * Test Resend connectivity at server startup.
  * Call this during app initialization to catch misconfiguration early.
  */
-export async function checkSmtpConfig(): Promise<boolean> {
-  const transporter = createTransporter();
-  if (!transporter) {
-    logger.error("SMTP not configured — set SMTP_HOST, SMTP_USER, and SMTP_PASS");
-    return false;
-  }
-
-  const smtpUser = process.env.SMTP_USER ?? "";
-  const fromEnv = process.env.SMTP_FROM ?? "";
-  const fromAddress = fromEnv.match(/<([^>]+)>/)?.[1] ?? smtpUser;
-
-  if (fromAddress !== smtpUser) {
-    logger.error(
-      { fromAddress, smtpUser },
-      "SMTP_FROM envelope does not match SMTP_USER — Gmail will reject all emails. " +
-      "Set SMTP_FROM to use the same address as SMTP_USER.",
-    );
+export async function checkEmailConfig(): Promise<boolean> {
+  const resend = getResendClient();
+  if (!resend) {
+    logger.error("Resend not configured — set RESEND_API_KEY in environment variables");
     return false;
   }
 
   try {
-    const ok = await transporter.verify();
-    logger.info({ result: ok }, "SMTP configuration verified — Gmail credentials are valid");
+    // Get the API key info to verify the key is valid
+    const { data, error } = await resend.apiKeys.list();
+    if (error) throw error;
+    logger.info({ result: "Resend API key is valid" }, "Resend configuration verified");
     return true;
   } catch (err: any) {
     logger.error(
-      { err: err.message, code: err.code, command: err.command, response: err.response },
-      "SMTP verification failed — check your Gmail App Password or SMTP credentials",
+      { err: err.message },
+      "Resend verification failed — check your RESEND_API_KEY",
     );
     return false;
   }

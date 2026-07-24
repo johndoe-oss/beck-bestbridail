@@ -1,6 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { checkSmtpConfig } from "./lib/email";
+import { checkEmailConfig } from "./lib/email";
 import { checkCloudinaryConfig } from "./lib/cloudinary";
 
 const rawPort = process.env["PORT"];
@@ -27,9 +27,9 @@ app.listen(port, (err) => {
 
   // Asynchronously check external service configurations
   // These run after the server starts so they don't block boot.
-  checkSmtpConfig().then((ok) => {
+  checkEmailConfig().then((ok) => {
     if (!ok) {
-      logger.warn("SMTP check failed — users will NOT receive email verification or password reset codes");
+      logger.warn("Resend check failed — users will NOT receive email verification or password reset codes. Set RESEND_API_KEY in Render environment variables.");
     }
   });
   checkCloudinaryConfig().then((ok) => {

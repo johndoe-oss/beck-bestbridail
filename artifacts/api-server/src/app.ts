@@ -102,6 +102,9 @@ app.use("/api/customers/register", authLimiter);
 app.use("/api/customers/login", authLimiter);
 app.use("/api/customers/verify-email", authLimiter);
 app.use("/api/customers/resend-verification", strictLimiter); // Tighter: prevent OTP flooding
+app.use("/api/customers/forgot-password", authLimiter);
+app.use("/api/customers/verify-reset-code", authLimiter);
+app.use("/api/customers/reset-password", authLimiter);
 app.use("/api/bb-portal/login", authLimiter);
 app.use("/api/payments/initiate", authLimiter); // Prevent payment spam
 app.use("/api", generalLimiter);
