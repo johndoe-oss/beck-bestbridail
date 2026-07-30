@@ -118,7 +118,8 @@ router.post(
 
       // On Render the local filesystem is ephemeral — files disappear on restart.
       // Using a local fallback would cause 404s later, so we return an error instead.
-      if (process.env.NODE_ENV === "production") {
+      const isEphemeralHostedRuntime = process.env.NODE_ENV === "production" || Boolean(process.env.RENDER);
+      if (isEphemeralHostedRuntime) {
         res.status(502).json({
           error: "Image upload failed. Cloudinary is unavailable.",
           detail: "Please try again later or contact support.",

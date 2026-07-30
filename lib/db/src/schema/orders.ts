@@ -31,8 +31,7 @@ export const orderItemsTable = pgTable("order_items", {
     .notNull()
     .references(() => ordersTable.id, { onDelete: "cascade" }),
   productId: integer("product_id")
-    .notNull()
-    .references(() => productsTable.id),
+    .references(() => productsTable.id, { onDelete: "set null" }),
   productName: text("product_name").notNull(),
   productImage: text("product_image"),
   quantity: integer("quantity").notNull(),

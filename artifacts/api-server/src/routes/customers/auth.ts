@@ -122,16 +122,16 @@ router.post("/customers/register", async (req, res): Promise<void> => {
   req.log.info({ email }, "Verification code generated for new registration");
 
   // Always log the code to Render logs as a fallback in case SMTP delivery fails.
-  req.log.warn({ email, code }, "VERIFICATION CODE — check Render logs if email doesn't arrive");
+  req.log.info({ email }, "Verification code generated for new registration");
 
   // Send the email and WAIT for it so we can report failures.
-  sendEmail(email, "Verify your Beckbest Bridal account", buildVerificationEmail(firstName, code))
-    .then(() => {
-      req.log.info({ email }, "Verification email sent successfully");
-    })
-    .catch((err: Error) => {
-      req.log.error({ err, email }, "Failed to send verification email — user won't receive it");
-    });
+  try {
+    await sendEmail(email, "Verify your Beckbest Bridal account", buildVerificationEmail(firstName, code));
+  } catch (err) {
+    req.log.error({ err, email }, "Failed to send verification email");
+    res.status(503).json({ error: "We could not send the verification code. Please try again." });
+    return;
+  }
 
   res.status(201).json({ message: "Account created. Please check your email for a verification code." });
 });
@@ -217,13 +217,13 @@ router.post("/customers/resend-verification", async (req, res): Promise<void> =>
 
   // IMPORTANT: Never log the code value — only log the email
   req.log.info({ email }, "Resend verification code requested");
-  sendEmail(email, "Your new verification code — Beckbest Bridal", buildVerificationEmail(customer.firstName, code))
-    .then(() => {
-      req.log.info({ email }, "Resend verification email sent successfully");
-    })
-    .catch((err: Error) => {
-      req.log.error({ err, email }, "Failed to resend verification email");
-    });
+  try {
+    await sendEmail(email, "Your new verification code — Beckbest Bridal", buildVerificationEmail(customer.firstName, code));
+  } catch (err) {
+    req.log.error({ err, email }, "Failed to resend verification email");
+    res.status(503).json({ error: "We could not send the verification code. Please try again." });
+    return;
+  }
 
   res.json({ message: "If an unverified account exists, a new code has been sent." });
 });
@@ -309,15 +309,15 @@ router.post("/customers/forgot-password", async (req, res): Promise<void> => {
   // Always log the code to Render logs as a fallback in case SMTP delivery fails.
   // Gmail's SMTP can be unreliable from Render's IP ranges, so this ensures you
   // can always find the code by checking the server logs.
-  req.log.warn({ email, code }, "PASSWORD RESET CODE — check Render logs if email doesn't arrive");
+  req.log.info({ email }, "Password reset code generated");
 
-  sendEmail(email, "Reset your Beckbest Bridal password", buildPasswordResetEmail(customer.firstName, code))
-    .then(() => {
-      req.log.info({ email }, "Password reset email sent successfully");
-    })
-    .catch((err: Error) => {
-      req.log.error({ err, email }, "Failed to send password reset email — user won't receive it");
-    });
+  try {
+    await sendEmail(email, "Reset your Beckbest Bridal password", buildPasswordResetEmail(customer.firstName, code));
+  } catch (err) {
+    req.log.error({ err, email }, "Failed to send password reset email");
+    res.status(503).json({ error: "We could not send the reset code. Please try again." });
+    return;
+  }
 
   res.json({ message: "If an account with that email exists, a reset code has been sent." });
 });

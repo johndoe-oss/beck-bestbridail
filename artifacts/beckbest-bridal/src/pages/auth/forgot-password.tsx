@@ -37,7 +37,7 @@ export default function ForgotPassword() {
         toast({ 
           variant: "destructive", 
           title: "Something went wrong", 
-          description: err?.data?.message || "Please try again later." 
+          description: err?.data?.error || err?.message || "Please try again later."
         });
       }
     });

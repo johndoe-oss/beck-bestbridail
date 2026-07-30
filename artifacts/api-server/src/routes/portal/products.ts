@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, productsTable, categoriesTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { db, productsTable, categoriesTable, orderItemsTable } from "@workspace/db";
+import { eq, desc, sql } from "drizzle-orm";
 import { requireAdminAuth } from "../../middlewares/adminAuth";
 import {
   AdminCreateProductBody,
@@ -152,12 +152,13 @@ router.delete("/bb-portal/products/:id", requireAdminAuth, async (req, res): Pro
     return;
   }
 
-  const [deleted] = await db
-    .delete(productsTable)
-    .where(eq(productsTable.id, params.data.id))
-    .returning({ id: productsTable.id });
+  const deleted = await db.transaction(async (tx) => {
+    // Preserve historical order snapshots while removing the catalog FK.
+    await tx.update(orderItemsTable).set({ productId: sql`NULL` }).where(eq(orderItemsTable.productId, params.data.id));
+    return tx.delete(productsTable).where(eq(productsTable.id, params.data.id)).returning({ id: productsTable.id });
+  });
 
-  if (!deleted) {
+  if (!deleted[0]) {
     res.status(404).json({ error: "Product not found" });
     return;
   }

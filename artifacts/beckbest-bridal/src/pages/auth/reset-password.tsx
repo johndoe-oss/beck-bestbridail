@@ -79,7 +79,7 @@ export default function ResetPassword() {
         toast({ 
           variant: "destructive", 
           title: "Invalid code", 
-          description: err?.data?.message || "The code is invalid or expired." 
+          description: err?.data?.error || err?.message || "The code is invalid or expired."
         });
       }
     });
@@ -103,7 +103,7 @@ export default function ResetPassword() {
         toast({ 
           variant: "destructive", 
           title: "Reset failed", 
-          description: err?.data?.message || "Please try again." 
+          description: err?.data?.error || err?.message || "Please try again."
         });
       }
     });
@@ -128,7 +128,7 @@ export default function ResetPassword() {
         toast({ 
           variant: "destructive", 
           title: "Failed to resend", 
-          description: err?.data?.message || "Could not send code." 
+          description: err?.data?.error || err?.message || "Could not send code."
         });
       }
     });

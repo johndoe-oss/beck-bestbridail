@@ -47,7 +47,7 @@ export default function VerifyEmail() {
         toast({ 
           variant: "destructive", 
           title: "Verification failed", 
-          description: err?.data?.message || "Invalid or expired code." 
+          description: err?.data?.error || err?.message || "Invalid or expired code."
         });
       }
     });
@@ -63,7 +63,7 @@ export default function VerifyEmail() {
         toast({ 
           variant: "destructive", 
           title: "Failed to resend", 
-          description: err?.data?.message || "Could not send code." 
+          description: err?.data?.error || err?.message || "Could not send code."
         });
       }
     });
