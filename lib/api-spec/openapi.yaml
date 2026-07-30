@@ -1009,6 +1009,7 @@ components:
       type: object
       properties:
         message: { type: string }
+        demoCode: { type: string, pattern: '^\\d{6}$' }
       required: [message]
 
     Product:

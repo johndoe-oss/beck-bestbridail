@@ -52,8 +52,12 @@ export default function ResetPassword() {
   useEffect(() => {
     const params = new URLSearchParams(searchString);
     const email = params.get('email');
+    const demoCode = params.get('demoCode');
     if (email) {
       verifyForm.setValue('email', email);
+    }
+    if (demoCode && /^\d{6}$/.test(demoCode)) {
+      verifyForm.setValue('code', demoCode);
     }
   }, [searchString, verifyForm]);
 

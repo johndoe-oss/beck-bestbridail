@@ -11,6 +11,7 @@ export interface HealthStatus {
 
 export interface SuccessMessage {
   message: string;
+  demoCode?: string;
 }
 
 export interface Product {
@@ -496,4 +497,3 @@ status?: string;
 limit?: number;
 offset?: number;
 };
-

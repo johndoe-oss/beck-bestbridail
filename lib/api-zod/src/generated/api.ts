@@ -181,7 +181,8 @@ export const ForgotPasswordBody = zod.object({
 })
 
 export const ForgotPasswordResponse = zod.object({
-  "message": zod.string()
+  "message": zod.string(),
+  "demoCode": zod.string().length(6).optional()
 })
 
 
@@ -1179,5 +1180,4 @@ export const GetLookbookResponse = zod.object({
   "createdAt": zod.coerce.date()
 })).optional()
 })
-
 

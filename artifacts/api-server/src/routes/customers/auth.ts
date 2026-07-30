@@ -285,6 +285,7 @@ router.post("/customers/forgot-password", async (req, res): Promise<void> => {
   }
 
   const { email } = parsed.data;
+  const demoMode = process.env.DEMO_MODE === "true";
 
   const [customer] = await db
     .select({ id: customersTable.id, firstName: customersTable.firstName })
@@ -311,15 +312,22 @@ router.post("/customers/forgot-password", async (req, res): Promise<void> => {
   // can always find the code by checking the server logs.
   req.log.info({ email }, "Password reset code generated");
 
-  try {
-    await sendEmail(email, "Reset your Beckbest Bridal password", buildPasswordResetEmail(customer.firstName, code));
-  } catch (err) {
-    req.log.error({ err, email }, "Failed to send password reset email");
-    res.status(503).json({ error: "We could not send the reset code. Please try again." });
-    return;
+  if (demoMode) {
+    req.log.info({ email }, "Demo mode: password reset email delivery skipped");
+  } else {
+    try {
+      await sendEmail(email, "Reset your Beckbest Bridal password", buildPasswordResetEmail(customer.firstName, code));
+    } catch (err) {
+      req.log.error({ err, email }, "Failed to send password reset email");
+      res.status(503).json({ error: "We could not send the reset code. Please try again." });
+      return;
+    }
   }
 
-  res.json({ message: "If an account with that email exists, a reset code has been sent." });
+  res.json({
+    message: "If an account with that email exists, a reset code has been sent.",
+    ...(demoMode ? { demoCode: code } : {}),
+  });
 });
 
 router.post("/customers/verify-reset-code", async (req, res): Promise<void> => {

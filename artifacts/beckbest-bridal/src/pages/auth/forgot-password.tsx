@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -29,9 +30,11 @@ export default function ForgotPassword() {
 
   const onSubmit = (data: ForgotPasswordFormValues) => {
     forgotMutation.mutate({ data }, {
-      onSuccess: () => {
+      onSuccess: (res) => {
         toast({ title: "Check your email", description: "If an account exists, a reset code has been sent." });
-        setLocation(`/reset-password?email=${encodeURIComponent(data.email)}`);
+        const demoCode = (res as { demoCode?: string }).demoCode;
+        const demoParam = demoCode ? `&demoCode=${encodeURIComponent(demoCode)}` : '';
+        setLocation(`/reset-password?email=${encodeURIComponent(data.email)}${demoParam}`);
       },
       onError: (err: any) => {
         toast({ 
@@ -72,7 +75,7 @@ export default function ForgotPassword() {
 
               <div>
                 <Button type="submit" className="w-full" disabled={forgotMutation.isPending}>
-                  {forgotMutation.isPending ? "Sending code..." : "Send reset code"}
+                  {forgotMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Please wait... verifying</> : "Send reset code"}
                 </Button>
               </div>
             </form>
