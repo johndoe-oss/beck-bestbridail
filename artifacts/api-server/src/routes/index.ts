@@ -15,7 +15,9 @@ import portalNotificationsRouter from "./portal/notifications";
 import portalStatsRouter from "./portal/stats";
 import portalLookbooksRouter from "./portal/lookbooks";
 import portalFeedbackRouter from "./portal/feedback";
+import portalLegalRouter from "./portal/legal";
 import paymentsRouter from "./payments";
+import legalRouter from "./legal";
 import { apiNotFoundHandler } from "../middlewares/security";
 
 const router: IRouter = Router();
@@ -28,7 +30,7 @@ router.use(customersAuthRouter);
 router.use(customersMeRouter);
 router.use(lookbooksRouter);
 router.use(paymentsRouter);
-
+router.use(legalRouter);
 
 // Admin portal routes
 router.use(portalAuthRouter);
@@ -41,6 +43,7 @@ router.use(portalOrdersRouter);
 router.use(portalNotificationsRouter);
 router.use(portalLookbooksRouter);
 router.use(portalFeedbackRouter);
+router.use(portalLegalRouter);
 
 // Catch-all 404 for any unmatched /api/* route
 router.use(apiNotFoundHandler);

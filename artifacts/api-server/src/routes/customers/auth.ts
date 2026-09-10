@@ -1,10 +1,12 @@
 import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { timingSafeEqual } from "crypto";
+import { z } from "zod";
 import { db, customersTable, emailVerificationsTable, passwordResetsTable } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
 import { signCustomerToken } from "../../lib/jwt";
 import { sendEmail, buildVerificationEmail, buildPasswordResetEmail } from "../../lib/email";
+import { verifyGoogleIdToken } from "../../lib/google";
 import {
   RegisterCustomerBody,
   VerifyCustomerEmailBody,
@@ -15,6 +17,13 @@ import {
   ResetPasswordBody,
 } from "@workspace/api-zod";
 import { requireCustomerAuth } from "../../middlewares/auth";
+
+const GoogleAuthBody = z.object({
+  credential: z.string().optional(),
+  idToken: z.string().optional(),
+}).refine((data) => !!(data.credential || data.idToken), {
+  message: "Google credential token is required",
+});
 
 const router: IRouter = Router();
 
@@ -71,6 +80,7 @@ function formatCustomer(c: typeof customersTable.$inferSelect) {
     firstName: c.firstName,
     lastName: c.lastName,
     phone: c.phone ?? null,
+    avatarUrl: c.avatarUrl ?? null,
     isVerified: c.isVerified,
     createdAt: c.createdAt.toISOString(),
   };
@@ -121,10 +131,6 @@ router.post("/customers/register", async (req, res): Promise<void> => {
 
   req.log.info({ email }, "Verification code generated for new registration");
 
-  // Always log the code to Render logs as a fallback in case SMTP delivery fails.
-  req.log.info({ email }, "Verification code generated for new registration");
-
-  // Send the email and WAIT for it so we can report failures.
   try {
     await sendEmail(email, "Verify your Beckbest Bridal account", buildVerificationEmail(firstName, code));
   } catch (err) {
@@ -215,7 +221,6 @@ router.post("/customers/resend-verification", async (req, res): Promise<void> =>
 
   await db.insert(emailVerificationsTable).values({ customerId: customer.id, code, expiresAt });
 
-  // IMPORTANT: Never log the code value — only log the email
   req.log.info({ email }, "Resend verification code requested");
   try {
     await sendEmail(email, "Your new verification code — Beckbest Bridal", buildVerificationEmail(customer.firstName, code));
@@ -250,8 +255,8 @@ router.post("/customers/login", async (req, res): Promise<void> => {
     .from(customersTable)
     .where(eq(customersTable.email, email.toLowerCase()));
 
-  if (!customer) {
-    // Generic error — don't reveal that the email doesn't exist
+  if (!customer || !customer.passwordHash) {
+    // Generic error — don't reveal that the email doesn't exist or uses Google sign-in
     recordFailedAttempt(email);
     res.status(401).json({ error: "Invalid email or password" });
     return;
@@ -274,6 +279,74 @@ router.post("/customers/login", async (req, res): Promise<void> => {
   resetAttempts(email);
 
   const token = signCustomerToken(customer.id, customer.email);
+  res.json({ customer: formatCustomer(customer), token });
+});
+
+// ── Google Sign-In & Sign-Up ──────────────────────────────────────────────────
+router.post("/customers/google", async (req, res): Promise<void> => {
+  const parsed = GoogleAuthBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const tokenStr = parsed.data.credential || parsed.data.idToken!;
+
+  let googleUser;
+  try {
+    googleUser = await verifyGoogleIdToken(tokenStr);
+  } catch (err: any) {
+    req.log.warn({ err: err?.message }, "Google ID token verification failed");
+    res.status(401).json({ error: err?.message || "Invalid Google token" });
+    return;
+  }
+
+  const { sub: googleId, email, given_name, family_name, picture } = googleUser;
+
+  // 1. Check if user already exists by googleId
+  let [customer] = await db
+    .select()
+    .from(customersTable)
+    .where(eq(customersTable.googleId, googleId));
+
+  if (!customer) {
+    // 2. Check if user exists by email (link Google ID and ensure verified)
+    const [existingByEmail] = await db
+      .select()
+      .from(customersTable)
+      .where(eq(customersTable.email, email));
+
+    if (existingByEmail) {
+      const [updated] = await db
+        .update(customersTable)
+        .set({
+          googleId,
+          isVerified: true,
+          avatarUrl: existingByEmail.avatarUrl || picture || null,
+        })
+        .where(eq(customersTable.id, existingByEmail.id))
+        .returning();
+      customer = updated;
+    } else {
+      // 3. New customer registration via Google OAuth
+      const [created] = await db
+        .insert(customersTable)
+        .values({
+          email,
+          firstName: given_name || "Google",
+          lastName: family_name || "User",
+          googleId,
+          avatarUrl: picture || null,
+          isVerified: true,
+        })
+        .returning();
+      customer = created;
+    }
+  }
+
+  // Issue customer JWT session
+  const token = signCustomerToken(customer.id, customer.email);
+  req.log.info({ customerId: customer.id, email: customer.email }, "Customer logged in via Google");
   res.json({ customer: formatCustomer(customer), token });
 });
 
@@ -307,9 +380,6 @@ router.post("/customers/forgot-password", async (req, res): Promise<void> => {
 
   await db.insert(passwordResetsTable).values({ customerId: customer.id, code, expiresAt, used: false });
 
-  // Always log the code to Render logs as a fallback in case SMTP delivery fails.
-  // Gmail's SMTP can be unreliable from Render's IP ranges, so this ensures you
-  // can always find the code by checking the server logs.
   req.log.info({ email }, "Password reset code generated");
 
   if (demoMode) {

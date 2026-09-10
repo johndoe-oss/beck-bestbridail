@@ -132,7 +132,7 @@ router.post("/payments/initiate", requireCustomerAuth, async (req, res): Promise
     shippingAddress,
     notes,
   } = req.body as {
-    provider: "cod" | "paystack" | "stripe";
+    provider: "paystack" | "stripe";
     productId?: number;
     quantity?: number;
     fromCart?: boolean;
@@ -140,8 +140,8 @@ router.post("/payments/initiate", requireCustomerAuth, async (req, res): Promise
     notes?: string;
   };
 
-  if (!["cod", "paystack", "stripe"].includes(provider)) {
-    res.status(400).json({ error: "Invalid payment provider" });
+  if (!["paystack", "stripe"].includes(provider)) {
+    res.status(400).json({ error: "Invalid payment provider. Please choose Paystack or Stripe." });
     return;
   }
 
@@ -159,22 +159,6 @@ router.post("/payments/initiate", requireCustomerAuth, async (req, res): Promise
 
   const totalAmount = items.reduce((s, i) => s + i.price * i.quantity, 0);
   const ref = generateRef();
-
-  // ── Cash on Delivery ──────────────────────────────────────────────────────
-  if (provider === "cod") {
-    const order = await createOrder(customerId, items, "cod", ref, shippingAddress, notes);
-    await db
-      .update(ordersTable)
-      .set({ paymentStatus: "paid", status: "processing", updatedAt: new Date() })
-      .where(eq(ordersTable.id, order.id));
-
-    if (fromCart) await db.delete(cartsTable).where(eq(cartsTable.customerId, customerId));
-
-    await sendOrderSms(customerId, totalAmount, "cod");
-
-    res.json({ provider: "cod", status: "success", orderId: order.id, totalAmount });
-    return;
-  }
 
   // ── Paystack ──────────────────────────────────────────────────────────────
   if (provider === "paystack") {

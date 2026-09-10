@@ -29,6 +29,8 @@ const ResetPassword = lazy(() => import('@/pages/auth/reset-password'));
 const PaymentVerify = lazy(() => import('@/pages/payment/verify'));
 const Lookbooks = lazy(() => import('@/pages/lookbooks/index'));
 const LookbookDetail = lazy(() => import('@/pages/lookbooks/[slug]'));
+const TermsPage = lazy(() => import('@/pages/legal/terms'));
+const PrivacyPage = lazy(() => import('@/pages/legal/privacy'));
 
 const Cart = lazy(() => import('@/pages/customer/cart'));
 const Checkout = lazy(() => import('@/pages/customer/checkout'));
@@ -47,6 +49,7 @@ const AdminNotifications = lazy(() => import('@/pages/admin/notifications'));
 const AdminFeedback = lazy(() => import('@/pages/admin/feedback'));
 const AdminLookbooks = lazy(() => import('@/pages/admin/lookbooks/index'));
 const AdminLookbookForm = lazy(() => import('@/pages/admin/lookbooks/form'));
+const AdminLegal = lazy(() => import('@/pages/admin/legal'));
 
 const NotFound = lazy(() => import('@/pages/not-found'));
 
@@ -89,6 +92,8 @@ function Router() {
         <Route path="/forgot-password" component={() => <PublicLayout><ForgotPassword /></PublicLayout>} />
         <Route path="/reset-password" component={() => <PublicLayout><ResetPassword /></PublicLayout>} />
         <Route path="/payment/verify" component={() => <PublicLayout><PaymentVerify /></PublicLayout>} />
+        <Route path="/terms" component={() => <PublicLayout><TermsPage /></PublicLayout>} />
+        <Route path="/privacy" component={() => <PublicLayout><PrivacyPage /></PublicLayout>} />
 
         {/* ── Protected Customer Pages ──────────────────────────── */}
         <Route path="/cart" component={() => <Protected component={Cart} />} />
@@ -113,6 +118,7 @@ function Router() {
         <Route path="/bb-studio/lookbooks" component={() => <Protected component={AdminLookbooks} adminOnly />} />
         <Route path="/bb-studio/lookbooks/new" component={() => <Protected component={AdminLookbookForm} adminOnly />} />
         <Route path="/bb-studio/lookbooks/:id" component={() => <Protected component={AdminLookbookFormEdit} adminOnly />} />
+        <Route path="/bb-studio/legal" component={() => <Protected component={AdminLegal} adminOnly />} />
 
         {/* ── 404 ───────────────────────────────────────────────── */}
         <Route component={() => <PublicLayout><NotFound /></PublicLayout>} />

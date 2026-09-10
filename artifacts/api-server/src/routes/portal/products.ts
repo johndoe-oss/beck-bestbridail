@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, productsTable, categoriesTable, orderItemsTable } from "@workspace/db";
+import { db, productsTable, categoriesTable, orderItemsTable, cartsTable, wishlistTable } from "@workspace/db";
 import { eq, desc, sql } from "drizzle-orm";
 import { requireAdminAuth } from "../../middlewares/adminAuth";
 import {
@@ -153,8 +153,14 @@ router.delete("/bb-portal/products/:id", requireAdminAuth, async (req, res): Pro
   }
 
   const deleted = await db.transaction(async (tx) => {
-    // Preserve historical order snapshots while removing the catalog FK.
+    // 1. Remove references from active carts and wishlists
+    await tx.delete(cartsTable).where(eq(cartsTable.productId, params.data.id));
+    await tx.delete(wishlistTable).where(eq(wishlistTable.productId, params.data.id));
+
+    // 2. Preserve historical order snapshots while removing the catalog FK
     await tx.update(orderItemsTable).set({ productId: sql`NULL` }).where(eq(orderItemsTable.productId, params.data.id));
+
+    // 3. Delete the product
     return tx.delete(productsTable).where(eq(productsTable.id, params.data.id)).returning({ id: productsTable.id });
   });
 

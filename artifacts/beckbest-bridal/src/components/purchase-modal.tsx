@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Truck, CreditCard, Check, AlertCircle, ArrowRight } from 'lucide-react';
+import { CreditCard, Check, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface PurchaseProduct {
   id: number;
@@ -26,10 +26,9 @@ interface PurchaseModalProps {
 }
 
 type ModalState = 'selection' | 'address' | 'processing' | 'confirmation' | 'success' | 'error';
-type PaymentProvider = 'cod' | 'paystack' | 'stripe';
+type PaymentProvider = 'paystack' | 'stripe';
 
 const providerLabels: Record<PaymentProvider, string> = {
-  cod: 'Cash on Delivery',
   paystack: 'Paystack',
   stripe: 'Stripe',
 };
@@ -92,12 +91,6 @@ export function PurchaseModal({ product, isOpen, onClose }: PurchaseModalProps) 
       if (!res.ok) {
         setErrorMessage(data.error || 'Something went wrong. Please try again.');
         setState('error');
-        return;
-      }
-
-      if (provider === 'cod') {
-        setOrderId(data.orderId);
-        setState('success');
         return;
       }
 
@@ -382,22 +375,6 @@ export function PurchaseModal({ product, isOpen, onClose }: PurchaseModalProps) 
                 {state === 'selection' && (
                   <div className="p-6 space-y-3">
                     <p className="text-sm text-muted-foreground uppercase tracking-widest mb-4">How would you like to pay?</p>
-
-                    {/* Pay on Delivery */}
-                    <button
-                      data-testid="button-pay-on-delivery"
-                      onClick={() => handleProviderSelect('cod')}
-                      className="w-full flex items-center gap-4 p-4 border border-border hover:border-primary hover:bg-muted/40 transition-all group text-left"
-                    >
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-primary/10 transition-colors">
-                        <Truck className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Pay on Delivery</p>
-                        <p className="text-xs text-muted-foreground">Cash or card when your order arrives</p>
-                      </div>
-                      <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
-                    </button>
 
                     {/* Pay with Paystack */}
                     <button
