@@ -71,6 +71,11 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   root: path.resolve(import.meta.dirname),
+  // Load .env from the repository root (Beckbest-Bridal/.env) so Vite exposes
+  // VITE_* vars (e.g. VITE_GOOGLE_CLIENT_ID) in both dev and production builds.
+  // The API server already loads this file via `--env-file-if-exists=../../.env`;
+  // this makes the same vars available to the browser bundle.
+  envDir: path.resolve(import.meta.dirname, "..", ".."),
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,

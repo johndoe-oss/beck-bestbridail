@@ -39,12 +39,12 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
-        connectSrc: ["'self'", "https://api.paystack.co"],
-        frameSrc: ["'none'"],
+        connectSrc: ["'self'", "https://api.paystack.co", "https://accounts.google.com"],
+        frameSrc: ["'self'", "https://accounts.google.com"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
@@ -262,7 +262,7 @@ app.use("/api", router);
 const candidatePaths = [
   path.resolve(process.cwd(), "artifacts", "beckbest-bridal", "dist", "public"),           // run from repo root
   path.resolve(process.cwd(), "..", "..", "artifacts", "beckbest-bridal", "dist", "public"), // run from artifacts/api-server/
-  path.resolve(__dirname, "..", "..", "beckbest-bridal", "dist", "public"),                 // dist/index.mjs in artifacts/api-server/dist/
+  path.resolve(import.meta.dirname, "..", "..", "beckbest-bridal", "dist", "public"), // dist/index.mjs in artifacts/api-server/dist/
 ];
 
 let frontendStaticDir: string | null = null;
